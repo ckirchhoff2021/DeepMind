@@ -1,102 +1,138 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optimizer
-from torch.utils.data import DataLoader
-from torchvision import models, transforms, datasets
+import torch.optim as opt
+from torch.optim import lr_scheduler
+from torch.utils.data import Dataset, DataLoader
+
+from models.resnet import *
+from models.vgg import *
+from models.mobilenet import *
+
+from utils import *
 
 import argparse
-from models.resnet import *
 
-parser = argparse.ArgumentParser(description='recognition training process')
-parser.add_argument('--net', default='resnet18', type=str, help='backbone')
-parser.add_argument('--epochs', default=30, type=int, help='epochs')
+parser = argparse.ArgumentParser(description='Pytorch recognition training...')
+parser.add_argument('--net', type=str, default='resnet50', help='backbone')
+parser.add_argument('--nclass', type=int, default=10, help='类别数')
+parser.add_argument('--dims', type=int, default=128, help='feature维度')
+parser.add_argument('--lr', type=float, default=0.003, help='learning rate')
+parser.add_argument('--reweighting', type=bool, default=False, help='reweighting方法')
+parser.add_argument('--epochs', type=int, default=30, help='epochs Num')
+parser.add_argument('--train', type=str, default='', help='train datas')
+parser.add_argument('--test', type=str, default='', help='test datas')
+parser.add_argument('--batch_size', type=int, default=128, help='batch size')
+parser.add_argument('--outfile', type=str, default='output/model.pth', help='模型保存文件名')
 args = parser.parse_args()
 
-train_transform = transforms.Compose(
-    [
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        transforms.Normalize(mean=[0.5, ], std=[0.2,])
-    ]
-)
 
-test_transform = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        transforms.Normalize(mean=[0.5, ], std=[0.2, ])
-    ]
-)
+def start_build(train_dataset, test_dataset, net, batch_size, epochs, model_file):
+    print('==> start building models...')
+    train_num = len(train_dataset)
+    batches = int(train_num) / batch_size
 
-def start_train(net, train_dataset, test_dataset, epochs, output_file):
-    print('==> start training loop...')
-    print('==> train datas: ', len(train_dataset))
-    print('==> test datas: ', len(test_dataset))
+    print('-- train num: ', len(train_dataset))
+    print('-- test num: ', len(test_dataset))
 
-    batch_size = 32
-    batches = int(len(train_dataset) / batch_size)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-
+    train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=4)
+    test_loader = DataLoader(test_dataset, shuffle=True, batch_size=64, num_workers=4)
     criterion = nn.CrossEntropyLoss()
-    opt = optimizer.Adam(net.parameters(), lr=0.001)
-    best_acc = 0.0
 
+    if cuda:
+        net = nn.DataParallel(net)
+        net.cuda()
+        criterion.cuda()
+
+    # optimizer = opt.Adam(net.parameters(), lr=0.001)
+    optimizer = opt.SGD(net.parameters(), lr=0.003, momentum=0.8)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
+
+    best_acc = 0.0
     for epoch in range(epochs):
         net.train()
+
         losses = 0.0
-        counts = successes = 0
+        correct = total = 0
         for index, (data, label) in enumerate(train_loader):
-            inputs, targets = data, label
+            if cuda:
+                inputs, targets = data.cuda(), label.cuda()
+            else:
+                inputs, targets = data, label
+
             outputs = net(inputs)
             loss = criterion(outputs, targets)
-            losses += loss.item()
             predicts = outputs.max(1)[1]
-            success = predicts.eq(targets).sum().item()
-            count = data.size(0)
-            opt.zero_grad()
+
+            success = predicts.eq(targets.view_as(predicts)).sum().item()
+            accuracy = success / data.size(0)
+
+            losses += loss.item()
+            correct += success
+            total += data.size(0)
+
+            if index % 10 == 0:
+                print('-- Epoch: [%d]/[%d]-[%d]/[%d], training: loss = %f, acc = %f' %
+                      (epoch, epochs, index, batches, loss.item(), accuracy))
+
+            optimizer.zero_grad()
             loss.backward()
-            opt.step()
+            optimizer.step()
 
-            successes += success
-            counts += count
-            if index % 50 == 0:
-                print('==> Epoch-[%d]/[%d]-[%d]/[%d], training process : loss = %.4f, acc = %.4f' %
-                      (epoch, epochs, index, batches, loss.item(), success/count))
+        scheduler.step()
+        average_loss = losses / len(train_loader)
+        average_acc = correct / total
 
-        epoch_loss = losses / len(train_loader)
-        epoch_acc = successes / counts
-        print('=> Epoch-[%d], training average :loss = %.4f, acc = %.4f' % (epoch_loss, epoch_acc))
+        print('-- training: average loss: {}, average acc: {}'.format(average_loss, average_acc))
 
         net.eval()
-        counts = successes = 0
-        for index, (data, label) in enumerate(test_loader):
-            inputs, targets = label
-            outputs = net(inputs)
-            predicts = outputs.max(1)[1]
-            successes += targets.eq(predicts).sum().item()
-            counts += data.size(0)
+        with torch.no_grad():
+            correct = total = 0
+            for index, (data, label) in enumerate(test_loader):
+                if cuda:
+                    inputs, targets = data.cuda(), label.cuda()
+                else:
+                    inputs, targets = data, label
+                outputs = net(inputs)
+                predicts = outputs.max(1)[1]
 
-        test_acc = successes / counts
-        print('=> Epoch-[%d], testing acc = %.4f' % (epoch, test_acc))
+                success = predicts.eq(targets.view_as(predicts)).sum().item()
+                correct += success
+                total += data.size(0)
 
-        if test_acc > best_acc:
-            best_acc = test_acc
-            state = {
-                'net': net.state_dict(),
-                'epoch': epoch,
-                'acc': best_acc
-            }
-            torch.save(state, output_file)
+            average_acc = correct / total
+            print('-- testing: average acc: {}'.format(average_acc))
+
+            if average_acc > best_acc:
+                best_acc = average_acc
+                print('Saving..')
+                state = {
+                    'net': net.state_dict(),
+                    'acc': average_acc,
+                    'epoch': epoch
+                }
+
+                torch.save(state, model_file)
+
+    print('All complete...')
+
+
+def main():
+    train_dataset = DatasetInstance(args.train, train=True)
+    test_dataset = DatasetInstance(args.test, train=False)
+    if args.net == 'resnet50':
+        print('Backbone: ', args.net)
+        net = resnet50(out_num=args.nclass, mid_dim=args.dims, pretrained=True)
+    elif args.net == 'resnet152':
+        print('Backbone: ', args.net)
+        net = resnet152(out_num=args.nclass, mid_dim=args.dims, pretrained=True)
+    else:
+        print('Backbone: ', args.net)
+        net = mobileV2(out_num=args.nclass, mid_dim=args.dims, pretrained=True)
+
+    start_build(train_dataset, test_dataset, net, args.batch_size, args.epochs, args.outfile)
 
 
 if __name__ == '__main__':
-    print(args.net)
-    net = resnet18()
-    net.conv1 = nn.Conv2d(1, 64, 3, 1, 1, bias=False)
-    print(net.conv1)
-    train_dataset = datasets.MNIST('../../datas', train=True, transform=train_transform)
-    test_dataset = datasets.MNIST('../../datas', train=False, transform=test_transform)
-    start_train(net, train_dataset, test_dataset, args.epochs, 'model.pth')
+    main()
+
+
+#  python train.py --train=../../output/sofa_train.json --test=../../output/sofa_test.json --outfile=../../output/sofa.pth --nclass=2 --epochs=2 --net=mobilenetV2
