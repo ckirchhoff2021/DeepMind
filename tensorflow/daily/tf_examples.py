@@ -259,6 +259,149 @@ def minist_test():
     print(model.evaluate(input_fn2))
 
 
+def mnist_classify():
+    mnist = tf.keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    x_train, x_test = x_train / 255.0, x_test / 255.0
+    x_train = x_train.reshape(x_train.shape[0], -1)
+    x_test = x_test.reshape(x_test.shape[0], -1)
+    print(x_train.shape, x_test.shape)
+    
+    x = tf.placeholder(tf.float32, shape=[None, 784])
+    y = tf.placeholder(tf.int64, shape=[None])
+
+    w1 = tf.get_variable('w1', shape=[784, 20], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    b1 = tf.get_variable('b1', shape=[20], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    w2 = tf.get_variable('w2', shape=[20, 10], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    b2 = tf.get_variable('b2', shape=[10], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+    y1 = tf.nn.relu(tf.matmul(x, w1) + b1)
+    y2 = tf.matmul(y1, w2) + b2
+    yp = tf.argmax(y2,axis=1)
+    acc = tf.reduce_mean(tf.cast(tf.equal(yp, y), tf.float32))
+    loss = tf.losses.sparse_softmax_cross_entropy(y, y2)
+
+    tf.summary.scalar('loss', loss)
+    tf.summary.scalar('acc', acc)
+    merged_summary = tf.summary.merge_all()
+    saver = tf.train.Saver()
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss)
+    init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+    sess = tf.Session()
+    sess.run(init_op)
+
+    best_acc = 0.0
+    for epoch in range(5):
+        train_writer = tf.summary.FileWriter(os.path.join(output_path, 'summary'), sess.graph)
+        batch_size = 128
+        batches = int(x_train.shape[0] / batch_size) + 1
+        train_loss = 0.0
+        train_acc = 0.0
+        for i in range(batches):
+            k1 = batch_size * i
+            k2 = batch_size * (i+1)
+            k2 = k2 if k2 < x_train.shape[0] else x_train.shape[0]
+            xf, yf = x_train[k1:k2], y_train[k1:k2]
+            _, batch_loss, batch_acc, summary = sess.run([optimizer, loss, acc, merged_summary], feed_dict={x:xf,y:yf})
+            train_writer.add_summary(summary, epoch * batches + i)
+            if i % 100 == 0:
+                print('==> epoch: [%d]/[%d] - [%d]/[%d], training loss = %f, acc = %f' % (epoch, 5, i, batches, batch_loss, batch_acc))
+            train_loss += batch_loss
+            train_acc += batch_acc
+
+        train_loss = train_loss / batches
+        train_acc = train_acc / batches
+        print('************************************************************')
+        print('* epoch: %d, training avaerage_loss = %f, average_acc = %f' %(epoch, train_loss, train_acc))
+        # print('*************************************************************')
+
+        batch_size = 64
+        batches = int(x_test.shape[0] / batch_size) + 1
+        test_loss = 0.0
+        test_acc = 0.0
+        for i in range(batches):
+            k1 = batch_size * i
+            k2 = batch_size * (i + 1)
+            k2 = k2 if k2 < x_test.shape[0] else x_test.shape[0]
+            xf, yf = x_test[k1:k2], y_test[k1:k2]
+            batch_loss, batch_acc = sess.run([loss, acc], feed_dict={x: xf, y: yf})
+            test_loss += batch_loss
+            test_acc += batch_acc
+        test_loss = test_loss / batches
+        test_acc = test_acc / batches
+        # print('************************************************************')
+        print('* epoch: %d, testing avaerage_loss = %f, average_acc = %f' % (epoch, test_loss, test_acc))
+        print('*************************************************************')
+        
+        if best_acc < test_acc:
+            best_acc = test_acc
+            saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=epoch)
+
+
+def mnist_classify2():
+    mnist = tf.keras.datasets.mnist
+    (x1, y1), (x2, y2) = mnist.load_data()
+    x1 = x1.reshape(x1.shape[0], -1) / 255.0
+    x2 = x2.reshape(x2.shape[0], -1) / 255.0
+
+    def _make_dataset_(x, y, batch_size=128, repeat=1):
+        datas = tf.data.Dataset.from_tensor_slices((x, y))
+        datas = datas.shuffle(buffer_size=1000).batch(batch_size, drop_remainder=False).repeat(5)
+        iterator = datas.make_one_shot_iterator()
+        element = iterator.get_next()
+        return element
+
+    e1 = _make_dataset_(x1, y1, batch_size=128, repeat=5)
+    e2 = _make_dataset_(x2, y2, batch_size=64)
+
+    def model_fn(x, y):
+        yt = tf.cast(y, tf.int64)
+        y1 = tf.layers.dense(x, 20, activation=tf.nn.relu)
+        y2 = tf.layers.dense(y1, 10)
+        yp = tf.argmax(y2, axis=1)
+        acc = tf.reduce_mean(tf.cast(tf.equal(yp, yt), tf.float32))
+        loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
+        return loss, acc
+
+    l1, a1 = model_fn(e1[0], e1[1])
+    l2, a2 = model_fn(e2[0], e2[1])
+
+    tf.summary.scalar('loss', l1)
+    tf.summary.scalar('acc', a1)
+    merged_summary = tf.summary.merge_all()
+
+    saver = tf.train.Saver()
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(l1)
+    init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+    sess = tf.Session()
+    sess.run(init_op)
+    train_writer = tf.summary.FileWriter(os.path.join(output_path, 'summary'), sess.graph)
+    epochs = 10000
+
+    best_acc = 0.0
+    for icount in range(epochs):
+        _, batch_loss, batch_acc, summary = sess.run([optimizer, l1, a1, merged_summary])
+        train_writer.add_summary(summary, icount)
+        if icount % 100 == 0:
+            print('==> epoch: [%d]/[%d], training loss = %f, acc = %f' % ( icount, epochs, batch_loss, batch_acc))
+
+        if icount % 200 == 0:
+            test_loss = 0.0
+            test_acc = 0.0
+            try:
+                while True:
+                    batch_loss, batch_acc = sess.run([l2, a2])
+                    test_loss += batch_loss / 100
+                    test_acc += batch_acc / 100
+            except tf.errors.OutOfRangeError:
+                print('************************************************************')
+                print('* icount-[%d]: testing avaerage_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
+                print('************************************************************')
+
+                if best_acc < test_acc:
+                    best_acc = test_acc
+                    saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=icount)
+
 
 if __name__ == '__main__':
     # logistic_test(train=False)
@@ -266,4 +409,6 @@ if __name__ == '__main__':
     # batch_test()
     # dataset_test()
     # estimator_test()
-    minist_test()
+    # minist_test()
+    # mnist_classify()
+    mnist_classify2()
