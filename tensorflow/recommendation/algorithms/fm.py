@@ -102,12 +102,7 @@ class FMModel:
 
     def get_tensor(self, input_type='user'):
         config_dict = self.user_config if input_type == 'user' else self.item_config
-        if input_type == 'positive':
-            placeholder_dict = self.placeholder_dict['positive']
-        elif input_type == 'negative':
-            placeholder_dict = self.placeholder_dict['negative']
-        else:
-            placeholder_dict = self.placeholder_dict['user']
+        placeholder_dict = self.placeholder_dict[input_type]
 
         vec = list()
         for feature in config_dict:
@@ -179,7 +174,7 @@ class FMModel:
         loss = tf.reduce_mean(loss)
         return loss
 
-    def train(self, user_info, pos_info, neg_info):
+    def train(self, user_info, pos_info, neg_info, model_dir):
         feed_dict = self.get_feed_dict(user_info, pos_info, neg_info)
         loss = self.triplet_loss()
         tf.summary.scalar('loss', loss)
@@ -192,7 +187,22 @@ class FMModel:
             _, vloss, summary = self.sess.run([optimizer, loss, summaries], feed_dict=feed_dict)
             summary_writer.add_summary(summary, global_step=epoch)
             print('==> epoch: %d, loss = %f'% (epoch, vloss))
-            self.saver.save(self.sess, os.path.join(output_path, 'fm.ckpt'))
+            self.saver.save(self.sess, os.path.join(model_dir, 'fm.ckpt'))
+
+    def restore(self, model_dir):
+        model_file = tf.train.latest_checkpoint(model_dir)
+        self.saver.restore(self.sess, model_file)
+
+    def predict(self, input_info, input_type='user'):
+        vec = self.get_embedding(input_type)
+        placholder_dict = self.placeholder_dict[input_type]
+        feed_dict = dict()
+        for fea_name in input_info.keys():
+            placeholder = placholder_dict[fea_name]
+            feed_dict[placeholder] = input_info[fea_name]
+        vec = self.sess.run(vec, feed_dict=feed_dict)
+        return vec
+
 
 
 def main():
@@ -242,8 +252,11 @@ def main():
     neg_info = {
         'y1': ['r1', 'r2', 'r3']
     }
-    model.train(user_info, pos_info, neg_info)
-
+    model_dir = os.path.join(output_path, 'fm')
+    # model.train(user_info, pos_info, neg_info, model_dir)
+    model.restore(model_dir)
+    embedding = model.predict(pos_info, 'positive')
+    print(embedding)
 
 if __name__ == '__main__':
     main()
