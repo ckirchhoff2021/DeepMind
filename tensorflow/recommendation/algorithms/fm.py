@@ -37,11 +37,17 @@ net_config = {
 '''
 
 class FMModel:
+    @staticmethod
+    def get_variable(variable_name, variable_shape):
+        variable = tf.get_variable(variable_name, shape=variable_shape, dtype=tf.float32,
+                                   initializer=tf.truncated_normal_initializer(stddev=0.02))
+        return variable
+
     def __init__(self, input_config, net_config):
+        self.user_dims = 0
+        self.item_dims = 0
         self.variable_dict = dict()
         self.placeholder_dict = dict()
-
-        self.user_dims = 0
         self.user_features = input_config['user']
         print('==> user features count: ', len(user_features))
         for feature in self.user_features:
@@ -50,8 +56,7 @@ class FMModel:
             feature_type = feature['feature_type']
             feature_seq = feature['feature_seq']
             bucket_num = feature['hash_bucket_num']
-            variable = tf.get_variable(feature_name, shape=[bucket_num, feature_dim], dtype=tf.float32,
-                                       initializer=tf.truncated_normal_initializer(stddev=0.02))
+            variable = self.get_variable(feature_name, shape=[bucket_num, feature_dim])
             self.variable_dict[feature_name] = variable
             self.placeholder_dict[feature_name] = tf.placeholder(tf.float32, [None, feature_seq])
             self.user_dims += feature_dim * feature_seq
@@ -99,6 +104,8 @@ class FMModel:
                                 initializer=tf.truncated_normal_initializer(stddev=0.02))
             self.variable_dict[bias_name] = b
             ki = n
+
+
 
     def get_input_tensor(self, input_feature):
         vec = list()

@@ -475,6 +475,17 @@ if __name__ == '__main__':
 
 '''
 
+def placeholder_test():
+    x = tf.placeholder(tf.float32, shape=[None, 2])
+    x1 = [[1.0, 2.0]]
+    x2 = [[3.0, 4.0]]
+    y1 = x + 0.1
+    y2 = x + 0.2
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    sess.run(tf.local_variables_initializer())
+    v1, v2 = sess.run([y1,y2], feed_dict={x:x1})
+    print(v1, v2)
 
 
 if __name__ == '__main__':
@@ -485,4 +496,5 @@ if __name__ == '__main__':
     # estimator_test()
     # minist_test()
     # mnist_classify()
-    mnist_classify2()
+    # mnist_classify2()
+    placeholder_test()
