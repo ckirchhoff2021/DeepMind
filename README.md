@@ -1,6 +1,13 @@
 # DeepMind
 
 + some appilcation algorithms with deep neural network
++ recognition
++ detection
++ segmentation
++ super resolution
++ gan
++ style transfer
+
 
 # Author
 
