@@ -481,10 +481,12 @@ def placeholder_test():
     x2 = [[3.0, 4.0]]
     y1 = x + 0.1
     y2 = x + 0.2
+    k = y2 - y1
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
-    v1, v2 = sess.run([y1,y2], feed_dict={x:x1})
+    v1 = sess.run([y1], feed_dict={x:x1})
+    v2 = sess.run([y2], feed_dict={x:x2})
     print(v1, v2)
 
 
