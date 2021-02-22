@@ -3,6 +3,7 @@ import random
 import requests
 from PIL import Image
 from multiprocessing import Pool, Process
+import imagehash
 
 
 def download_image(str_image, url, folder):
@@ -32,3 +33,11 @@ def convert_RGBA2RGB(src):
     return s3
 
 
+def image_hash(image_file):
+    '''
+    image_hash_code
+    '''
+    image_data = Image.open(image_file)
+    hash = imagehash.phash(image_data)
+    ret = str(hash)
+    return ret

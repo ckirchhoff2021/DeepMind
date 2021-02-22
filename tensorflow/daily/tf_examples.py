@@ -403,6 +403,80 @@ def mnist_classify2():
                     saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=icount)
 
 
+'''
+tf2.0
+import tensorflow as tf
+from tensorflow.python.keras.models import Model
+
+
+@tf.function
+def inner_fucntion(x,y,b):
+    x = tf.matmul(x,y)
+    x = x + b
+    return x
+
+
+def main():
+    x1 = tf.constant([1.0,2.0],dtype=tf.float32)
+    x2 = tf.constant([1.1,2.2], dtype=tf.float32)
+    x3 = x1 + x2
+    print(x3)
+
+    x4 = tf.reshape(x1, [1,2])
+    x5 = tf.reshape(x2, [2, 1])
+    print(x4 * x5)
+
+    y1 = tf.ones((2,2))
+    with tf.GradientTape() as t:
+        t.watch(y1)
+        y2 = tf.reduce_sum(y1)
+        z = y2 * y2
+
+    dz_dy1 = t.gradient(z, y1)
+    print(dz_dy1)
+    print(y2)
+
+    g_function = tf.function(inner_fucntion)
+    x1 = tf.constant([[1.0, 2.0]])
+    y1 = tf.constant([[2.0], [3.0]])
+    b1 = tf.constant(4.0)
+    print(g_function(x1, y1, b1))
+
+
+class Dense(tf.Module):
+    def __init__(self, in_features, out_features):
+        super(Dense, self).__init__()
+        self.w = tf.Variable(tf.random.normal([in_features, out_features], name='w'))
+        self.b = tf.Variable(tf.zeros([out_features]),name='b')
+    
+    def __call__(self, x):
+        y = tf.matmul(x, self.w) + self.b
+        return y
+
+
+class LinearModel(tf.Module):
+    def __init__(self):
+        super(LinearModel, self).__init__()
+        self.fc1 = Dense(in_features=3, out_features=3)
+        self.fc2 = Dense(in_features=3, out_features=2)
+
+    def __call__(self, x):
+        y1 = self.fc1(x)
+        y2 = self.fc2(y1)
+        return y2
+
+
+if __name__ == '__main__':
+    net = LinearModel()
+    x1 = tf.random.uniform([2,3])
+    print(x1)
+    y1 = net(x1)
+    print(y1)
+
+'''
+
+
+
 if __name__ == '__main__':
     # logistic_test(train=False)
     # test002()

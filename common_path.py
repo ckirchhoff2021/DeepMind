@@ -6,4 +6,6 @@ mlen_path = os.path.join(current_path, 'datas/mlens')
 
 output_path = os.path.join(current_path, 'output')
 
-mnist_path = os.path.join(current_path, 'datas/MNIST')
+mnist_path = os.path.join(current_path, 'datas')
+
+data_path = os.path.join(current_path, 'datas')
