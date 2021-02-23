@@ -119,7 +119,7 @@ class FMModel:
                 embeddings = tf.nn.embedding_lookup(varibles, indices)
                 embeddings = tf.layers.flatten(embeddings)
             elif fea_type == 'int':
-                embeddings = tf.nn.embedding_lookup(placeholder, indices)
+                embeddings = tf.nn.embedding_lookup(varibles, placeholder)
                 embeddings = tf.layers.flatten(embeddings)
             else:
                 embeddings = tf.layers.flatten(placeholder)
@@ -174,20 +174,52 @@ class FMModel:
         loss = tf.reduce_mean(loss)
         return loss
 
-    def train(self, user_info, pos_info, neg_info, model_dir):
+    def train(self, user_info, pos_info, neg_info, model_dir, summary_dir):
         feed_dict = self.get_feed_dict(user_info, pos_info, neg_info)
         loss = self.triplet_loss()
         tf.summary.scalar('loss', loss)
         summaries = tf.summary.merge_all()
         optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss)
         init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
-        summary_writer = tf.summary.FileWriter(os.path.join(output_path, 'summary'), self.sess.graph)
+        summary_writer = tf.summary.FileWriter(summary_dir, self.sess.graph)
         self.sess.run(init_op)
         for epoch in range(10):
             _, vloss, summary = self.sess.run([optimizer, loss, summaries], feed_dict=feed_dict)
             summary_writer.add_summary(summary, global_step=epoch)
             print('==> epoch: %d, loss = %f'% (epoch, vloss))
             self.saver.save(self.sess, os.path.join(model_dir, 'fm.ckpt'))
+
+
+    def batch_train(self, user_info, pos_info, neg_info, model_dir, summary_dir, batch_size=128, epochs=10):
+        dataset = tf.data.Dataset.from_tensor_slices((user_info, pos_info, neg_info))
+        dataset = dataset.shuffle(buffer_size=1000).batch(batch_size).repeat(epochs)
+        iterator = dataset.make_one_shot_iterator()
+        element = iterator.get_next()
+
+        loss = self.triplet_loss()
+        tf.summary.scalar('loss', loss)
+        summaries = tf.summary.merge_all()
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss)
+        init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+        summary_writer = tf.summary.FileWriter(summary_dir, self.sess.graph)
+        self.sess.run(init_op)
+        count = 0
+
+        try:
+            while True:
+                count += 1
+                batch_datas = self.sess.run(element)
+                user_data, pos_data, neg_data = batch_datas
+                feed_dict = self.get_feed_dict(user_data, pos_data, neg_data)
+                _, vloss, summary = self.sess.run([optimizer, loss, summaries], feed_dict=feed_dict)
+                summary_writer.add_summary(summary, global_step=count)
+                print('==> count: %d, loss = %f' % (count, vloss))
+                if count % 10 == 0:
+                    self.saver.save(self.sess, os.path.join(model_dir, 'fm.ckpt'), global_step=count)
+
+        except tf.errors.OutOfRangeError:
+                print('end!')
+
 
     def restore(self, model_dir):
         model_file = tf.train.latest_checkpoint(model_dir)
@@ -253,10 +285,13 @@ def main():
         'y1': ['r1', 'r2', 'r3']
     }
     model_dir = os.path.join(output_path, 'fm')
-    # model.train(user_info, pos_info, neg_info, model_dir)
-    model.restore(model_dir)
-    embedding = model.predict(pos_info, 'positive')
-    print(embedding)
+    summary_dir = os.path.join(output_path,'summary')
+    # model.train(user_info, pos_info, neg_info, model_dir, summary_dir)
+    model.batch_train(user_info, pos_info, neg_info, model_dir, summary_dir, batch_size=2, epochs=10)
+    # model.restore(model_dir)
+    # embedding = model.predict(pos_info, 'positive')
+    # print(embedding)
+
 
 if __name__ == '__main__':
     main()
