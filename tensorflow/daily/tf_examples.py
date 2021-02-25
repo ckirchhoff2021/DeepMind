@@ -351,8 +351,8 @@ def mnist_classify2():
         element = iterator.get_next()
         return element
 
-    e1 = _make_dataset_(x1, y1, batch_size=128, repeat=5)
-    e2 = _make_dataset_(x2, y2, batch_size=64)
+    e1 = _make_dataset_(x1, y1, batch_size=128, repeat=2)
+    e2 = _make_dataset_(x2, y2, batch_size=64, repeat=-1)
 
     def model_fn(x, y):
         yt = tf.cast(y, tf.int64)
@@ -363,44 +363,53 @@ def mnist_classify2():
         loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
         return loss, acc
 
-    l1, a1 = model_fn(e1[0], e1[1])
-    l2, a2 = model_fn(e2[0], e2[1])
+    x = tf.placeholder(tf.float32, [None, 784])
+    y = tf.placeholder(tf.int32, [None])
 
-    tf.summary.scalar('loss', l1)
-    tf.summary.scalar('acc', a1)
+    loss, acc = model_fn(x, y)
+    tf.summary.scalar('loss', loss)
+    tf.summary.scalar('acc', acc)
     merged_summary = tf.summary.merge_all()
 
     saver = tf.train.Saver()
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(l1)
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss)
     init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
     sess = tf.Session()
     sess.run(init_op)
     train_writer = tf.summary.FileWriter(os.path.join(output_path, 'summary'), sess.graph)
-    epochs = 10000
 
     best_acc = 0.0
-    for icount in range(epochs):
-        _, batch_loss, batch_acc, summary = sess.run([optimizer, l1, a1, merged_summary])
-        train_writer.add_summary(summary, icount)
-        if icount % 100 == 0:
-            print('==> epoch: [%d]/[%d], training loss = %f, acc = %f' % ( icount, epochs, batch_loss, batch_acc))
+    icount = 0
+    try:
+        while True:
+            icount += 1
+            batch_x, batch_y = sess.run(e1)
+            _, batch_loss, batch_acc, summary = sess.run([optimizer, loss, acc, merged_summary], feed_dict={x:batch_x, y:batch_y})
+            train_writer.add_summary(summary, icount)
+            if icount % 100 == 0:
+                print('==> ibatch: [%d], training loss = %f, acc = %f' % (icount, batch_loss, batch_acc))
 
-        if icount % 200 == 0:
-            test_loss = 0.0
-            test_acc = 0.0
-            try:
-                while True:
-                    batch_loss, batch_acc = sess.run([l2, a2])
-                    test_loss += batch_loss / 100
-                    test_acc += batch_acc / 100
-            except tf.errors.OutOfRangeError:
-                print('************************************************************')
-                print('* icount-[%d]: testing avaerage_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
-                print('************************************************************')
-
+            if icount % 200 == 0:
+                test_loss = 0.0
+                test_acc = 0.0
+                for i in range(100):
+                    batch_x, batch_y = sess.run(e2)
+                    batch_loss, batch_acc = sess.run([loss, acc], feed_dict={x: batch_x, y: batch_y})
+                    test_loss += batch_loss
+                    test_acc += batch_acc
+                test_loss = test_loss / 100.0
+                test_acc = test_acc / 100.0
+                print('==> ibatch: [%d]: testing avaerage_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
                 if best_acc < test_acc:
                     best_acc = test_acc
                     saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=icount)
+
+
+    except tf.errors.OutOfRangeError:
+        print('end!')
+
+
+
 
 
 '''
@@ -498,5 +507,5 @@ if __name__ == '__main__':
     # estimator_test()
     # minist_test()
     # mnist_classify()
-    # mnist_classify2()
-    placeholder_test()
+    mnist_classify2()
+    # placeholder_test()
