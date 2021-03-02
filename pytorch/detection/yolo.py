@@ -4,8 +4,8 @@ import torch.optim as opt
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
-from detection.voc import *
-from detection.loss import YoloLoss
+from voc import *
+from loss import YoloLoss
 from collections import OrderedDict
 from pycocotools.coco import COCO
 
@@ -168,10 +168,9 @@ if __name__ == '__main__':
     coco = datasets.CocoDetection(root="/Users/chenxiang/Downloads/dataset/cocos/train2014",
                                    annFile="/Users/chenxiang/Downloads/dataset/cocos/annotations/instances_train2014.json")
     coco = COCO(annotation_file="/Users/chenxiang/Downloads/dataset/cocos/annotations/instances_train2014.json")
-    print(len(coco))
 
     cats = coco.loadCats(coco.getCatIds())
-    nms = [cat['name'] for cate in cates]
+    nms = [cat['name'] for cat in cats]
     print('COCO categories: \n {} \n'.format(' '.join(nms)))
 
     nms = set([cat['supercategory'] for cat in cats])
