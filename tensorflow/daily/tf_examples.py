@@ -399,7 +399,7 @@ def mnist_classify2():
                     test_acc += batch_acc
                 test_loss = test_loss / 100.0
                 test_acc = test_acc / 100.0
-                print('==> ibatch: [%d]: testing avaerage_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
+                print('==> ibatch: [%d]: testing average_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
                 if best_acc < test_acc:
                     best_acc = test_acc
                     saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=icount)
@@ -507,5 +507,8 @@ if __name__ == '__main__':
     # estimator_test()
     # minist_test()
     # mnist_classify()
-    mnist_classify2()
-    # placeholder_test()
+    # mnist_classify2()
+    placeholder_test()
+
+
+

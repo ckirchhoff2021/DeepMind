@@ -395,11 +395,11 @@ def test004():
 
 
 def main():
-    # test_001()
+    test_001()
     # test_002()
     # test_003()
     # kerastune_test()
-    test004()
+    # test004()
 
 
 if __name__ == '__main__':
