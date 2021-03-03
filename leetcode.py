@@ -156,7 +156,29 @@ class Solution:
                     ret += ('1'+values[i])
                 k = 1
             i += 1
-        return ret                
+        return ret
+
+
+    def deleteDuplicates(self, head) :
+        node = head
+        if node is None:
+            return None
+        values = list()
+        nodes = list()
+        while node:
+            value = node.val
+            if value not in values:
+                values.append(value)
+                nodes.append(node)
+            node = node.next
+        p = nodes[0]
+        p.next = None
+        for i in range(1, len(nodes)):
+            q = nodes[i]
+            q.next = None
+            p.next = q
+            p = p.next
+        return nodes[0]
             
 
 
@@ -226,6 +248,17 @@ def main():
     print('-- count and say --')
     value = solution.countAndSay(6)
     print(value)
+
+    print(' -- delete duplicates --')
+    [1, 1, 2, 3, 3]
+    k1 = ListNode(1)
+    k1.next = ListNode(1)
+    k1.next.next = ListNode(2)
+    k1.next.next.next = ListNode(3)
+    k1.next.next.next.next = ListNode(3)
+    value = solution.deleteDuplicates(k1)
+
+
 
 if __name__ == '__main__':
     main()
