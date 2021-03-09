@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optimizer
 
+import misc_utils as utils
+
 class LinearModel(nn.Module):
     def __init__(self):
         super(LinearModel, self).__init__()
@@ -37,4 +39,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    utils.color_print('test', 2)

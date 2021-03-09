@@ -179,8 +179,33 @@ class Solution:
             p.next = q
             p = p.next
         return nodes[0]
-            
 
+    @staticmethod
+    def valid(s, k1, words):
+        if len(words) == 0:
+            return True
+
+        for i in range(len(words)):
+            word = words[i]
+            wlen = len(word)
+            k2 = k1 + wlen
+            if k2 > len(s):
+                continue
+            slice = s[k1:k2]
+            if slice == word:
+                words_copy = words.copy()
+                words_copy.pop(i)
+                if Solution.valid(s,k2,words_copy):
+                    return True
+        return False
+
+    def findSubstring(self, s, words):
+        ret = list()
+        count = len(s)
+        for i in range(count):
+            if self.valid(s, i, words):
+                ret.append(i)
+        return ret
 
              
 def merged_sorted(a1, a2):
@@ -257,6 +282,16 @@ def main():
     k1.next.next.next = ListNode(3)
     k1.next.next.next.next = ListNode(3)
     value = solution.deleteDuplicates(k1)
+
+
+    print(' -- findSubstring -- ')
+    # s = "barfoothefoobarman"
+    s = "barfoofoobarthefoobarman"
+    # words = ["foo","bar"]
+    words = ["bar","foo","the"]
+    value = solution.findSubstring(s, words)
+    print(value)
+
 
 
 

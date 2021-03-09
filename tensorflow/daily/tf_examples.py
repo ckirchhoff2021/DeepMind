@@ -499,6 +499,24 @@ def placeholder_test():
     print(v1, v2)
 
 
+def sample_test():
+    candidates = np.array([[1,1,2,2,2,3,3,3,3,4,4,4,4,4,4,5,5,6,6,7,8,9]])
+    print(candidates.shape)
+    candidates = np.reshape(candidates, (22, 1))
+    print(candidates.shape)
+    sampled_ids, true_expected, sample_expected = tf.nn.log_uniform_candidate_sampler(candidates,
+                                                                                      num_true=1,
+                                                                                      num_sampled=20,
+                                                                                      unique=True,
+                                                                                      range_max=1000)
+    init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+    with tf.Session() as sess:
+        sess.run(init_op)
+        print(sess.run(sampled_ids))
+        print(sess.run(true_expected))
+        print(sess.run(sample_expected))
+
+
 if __name__ == '__main__':
     # logistic_test(train=False)
     # test002()
@@ -507,5 +525,7 @@ if __name__ == '__main__':
     # estimator_test()
     # minist_test()
     # mnist_classify()
-    mnist_classify2()
+    # mnist_classify2()
     # placeholder_test()
+
+    sample_test()
