@@ -259,6 +259,68 @@ def minist_test():
     print(model.evaluate(input_fn2))
 
 
+def minist_test_x():
+    tf.logging.set_verbosity(tf.logging.INFO)
+    mnist = tf.keras.datasets.mnist
+    (x1, y1), (x2, y2) = mnist.load_data()
+    x1, x2 = x1 / 255.0, x2 /255.0
+
+    def input_fn1():
+        dataset = tf.data.Dataset.from_tensor_slices((x1, y1))
+        dataset= dataset.shuffle(buffer_size=1000).batch(128,drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    def input_fn2():
+        dataset = tf.data.Dataset.from_tensor_slices((x2, y2))
+        dataset = dataset.shuffle(buffer_size=100).batch(64, drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    def model_fn(features, labels, mode):
+        feature_flatten = tf.layers.flatten(features)
+        yt = tf.cast(labels, tf.int32)
+        y1 = tf.layers.dense(feature_flatten, 20, activation=tf.nn.relu)
+        y2 = tf.layers.dense(y1, 10)
+        y_probs = tf.nn.softmax(y2, axis=1)
+        y_predicts = tf.argmax(y2, axis=1)
+
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            predicts = { 'predicts': y_predicts }
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predicts)
+
+        loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
+        if mode == tf.estimator.ModeKeys.EVAL:
+            accuracy = tf.metrics.accuracy(yt, y_predicts)
+            metrics = {'accuracy': accuracy}
+            return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.02)
+        train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+
+    session_config = tf.ConfigProto(allow_soft_placement=True)
+    run_config = tf.estimator.RunConfig(
+        model_dir=os.path.join(output_path, 'estimator'),
+        session_config=session_config,
+        save_checkpoints_steps=2,
+        keep_checkpoint_max=10,
+        save_summary_steps=1,
+        log_step_count_steps=2
+    )
+
+    model = tf.estimator.Estimator(model_fn, config=run_config)
+    train_input_fn = input_fn1
+    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn, max_steps=10)
+    eval_input_fn = input_fn2
+    eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn, start_delay_secs=3, throttle_secs=3)
+
+    try:
+        tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
+    except:
+        print('done...')
+
+
 def mnist_classify():
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -411,7 +473,6 @@ def mnist_classify2():
 
 
 
-
 '''
 tf2.0
 import tensorflow as tf
@@ -517,6 +578,8 @@ def sample_test():
         print(sess.run(sample_expected))
 
 
+
+
 if __name__ == '__main__':
     # logistic_test(train=False)
     # test002()
@@ -527,5 +590,5 @@ if __name__ == '__main__':
     # mnist_classify()
     # mnist_classify2()
     # placeholder_test()
-
-    sample_test()
+    # sample_test()
+    minist_test_x()
