@@ -279,16 +279,17 @@ def minist_test_x():
 
     def model_fn(features, labels, mode):
         feature_flatten = tf.layers.flatten(features)
-        yt = tf.cast(labels, tf.int32)
         y1 = tf.layers.dense(feature_flatten, 20, activation=tf.nn.relu)
         y2 = tf.layers.dense(y1, 10)
         y_probs = tf.nn.softmax(y2, axis=1)
         y_predicts = tf.argmax(y2, axis=1)
+        y_probs = tf.reduce_max(y_probs, axis=1)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            predicts = { 'predicts': y_predicts }
+            predicts = { 'predicts': y_predicts, 'probability': y_probs }
             return tf.estimator.EstimatorSpec(mode=mode, predictions=predicts)
 
+        yt = tf.cast(labels, tf.int32)
         loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
         if mode == tf.estimator.ModeKeys.EVAL:
             accuracy = tf.metrics.accuracy(yt, y_predicts)
@@ -315,10 +316,21 @@ def minist_test_x():
     eval_input_fn = input_fn2
     eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn, start_delay_secs=3, throttle_secs=3)
 
-    try:
-        tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
-    except:
-        print('done...')
+    # try:
+    #     tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
+    # except:
+    #     print('done...')
+
+    def input_fn3():
+        x = tf.constant(np.random.randn(3, 28, 28))
+        dataset = tf.data.Dataset.from_tensor_slices(x)
+        dataset = dataset.shuffle(buffer_size=10).batch(1, drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    results = model.predict(input_fn3)
+    for value in results:
+        print(value)
 
 
 def mnist_classify():
