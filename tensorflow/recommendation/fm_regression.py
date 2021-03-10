@@ -202,66 +202,13 @@ class FMRegressor:
 
 
 
-def build_model(config):
-    variable_dict = dict()
-    for name in config.keys():
-        params = config[name]
-        variable = tf.get_variable(name, shape=[params['buckets'], params['dim']], dtype=tf.float32,
-                                   initializer=tf.truncated_normal_initializer(stddev=0.002))
-        variable_dict[name] = variable
-
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.Dense(1, activation='sigmoid')
-    ])
-    return variable_dict, model
-
-def regression_test():
-    config = {
-        'age': {'dim': 10, 'buckets': 100, 'type': 'int', 'sequence': 1},
-        'gender': {'dim': 10, 'buckets': 10, 'type': 'string', 'sequence': 1},
-        'occupation': {'dim': 10, 'buckets': 1000, 'type': 'int', 'sequence': 1},
-        'code': {'dim': 10, 'buckets': 10000, 'type': 'string', 'sequence': 1},
-        'genres': {'dim': 10, 'buckets': 1000, 'type': 'string', 'sequence': 3},
-    }
-    variable_dict, model = build_model(config)
-    datas = RatingDataset()
-    sample_dict, labels = datas.get_samples()
-
-    def preprocess(sample, label):
-        embedding_list = list()
-        for colname in config.keys():
-            params = config[colname]
-            if params['type'] == 'string':
-                indices = tf.strings.to_hash_bucket_fast(sample_dict[colname],params['buckets'])
-                embedding = tf.nn.embedding_lookup(variable_dict[colname], indices)
-            else:
-                embedding = tf.nn.embedding_lookup(variable_dict[colname], sample_dict[colname])
-            embedding = tf.layers.flatten(embedding)
-            embedding_list.append(embedding)
-        embedding = tf.concat(embedding_list, 1)
-        return embedding, label
-
-    batch_size = 512
-    dataset = tf.data.Dataset.from_tensor_slices((sample_dict, labels)).map(preprocess)
-    dataset = dataset.shuffle(buffer_size=len(labels))
-    dataset = dataset.repeat()
-    dataset = dataset.batch(batch_size)
-    dataset = dataset.prefetch(buffer_size=512)
-    optimizer = tf.train.AdamOptimizer(learning_rate=0.002)
-    model.compile(optimizer=optimizer, loss='mean_squared_error')
-    model.fit(dataset, epochs=3, steps_per_epoch=100)
-
-
 def main():
     datas = RatingDataset()
     sample_dict, labels = datas.get_samples()
     net = FMRegressor()
-    # net.fit(sample_dict, labels, 5)
-    net.batch_fit(sample_dict, labels, 5)
+    net.fit(sample_dict, labels, 5)
+    # net.batch_fit(sample_dict, labels, 5)
 
 
 if __name__ == '__main__':
-    # main()
-    regression_test()
+    main()

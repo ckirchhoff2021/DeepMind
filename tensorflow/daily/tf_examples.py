@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from common_path import *
+from hooks import *
 
 '''
 tensorflow 1.0 daily work
@@ -291,14 +292,17 @@ def minist_test_x():
 
         yt = tf.cast(labels, tf.int32)
         loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
+        accuracy = tf.metrics.accuracy(yt, y_predicts)
+        metrics = {'accuracy': accuracy}
+
         if mode == tf.estimator.ModeKeys.EVAL:
-            accuracy = tf.metrics.accuracy(yt, y_predicts)
-            metrics = {'accuracy': accuracy}
             return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=0.02)
         train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
-        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op,
+                                          training_chief_hooks=[LogviewTrainHook(metrics, tf.train.get_global_step())],
+                                          evaluation_hooks=[EarlyStopping(metrics, tf.train.get_global_step())])
 
     session_config = tf.ConfigProto(allow_soft_placement=True)
     run_config = tf.estimator.RunConfig(
@@ -316,11 +320,13 @@ def minist_test_x():
     eval_input_fn = input_fn2
     eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn, start_delay_secs=3, throttle_secs=3)
 
+    # model.evaluate(input_fn2)
     # try:
-    #     tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
+    tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
     # except:
     #     print('done...')
 
+    '''
     def input_fn3():
         x = tf.constant(np.random.randn(3, 28, 28))
         dataset = tf.data.Dataset.from_tensor_slices(x)
@@ -331,6 +337,7 @@ def minist_test_x():
     results = model.predict(input_fn3)
     for value in results:
         print(value)
+    '''
 
 
 def mnist_classify():
