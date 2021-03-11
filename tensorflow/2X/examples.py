@@ -259,7 +259,7 @@ def kerastune_test():
     tuner.search(x1, y1, epochs=50, validation_split=0.2, callbacks=[stop_early])
     best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
 
-    print(f"""
+    print("""
     The hyperparameter search is complete. The optimal number of units in the first densely-connected
     layer is {best_hps.get('units')} and the optimal learning rate for the optimizer
     is {best_hps.get('learning_rate')}.

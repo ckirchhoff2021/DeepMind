@@ -188,7 +188,7 @@ def main():
     net = SEVGGLike()
     print(net)
 
-    x = torch.randn(1, 3, 28, 28)
+    x = torch.randn(1, 3, 224, 224)
     y = net(x)
     print(y.size())
 

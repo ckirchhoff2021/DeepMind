@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from common_path import *
+from hooks import *
 
 '''
 tensorflow 1.0 daily work
@@ -259,6 +260,86 @@ def minist_test():
     print(model.evaluate(input_fn2))
 
 
+def minist_test_x():
+    tf.logging.set_verbosity(tf.logging.INFO)
+    mnist = tf.keras.datasets.mnist
+    (x1, y1), (x2, y2) = mnist.load_data()
+    x1, x2 = x1 / 255.0, x2 /255.0
+
+    def input_fn1():
+        dataset = tf.data.Dataset.from_tensor_slices((x1, y1))
+        dataset= dataset.shuffle(buffer_size=1000).batch(128,drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    def input_fn2():
+        dataset = tf.data.Dataset.from_tensor_slices((x2, y2))
+        dataset = dataset.shuffle(buffer_size=100).batch(64, drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    def model_fn(features, labels, mode):
+        feature_flatten = tf.layers.flatten(features)
+        y1 = tf.layers.dense(feature_flatten, 20, activation=tf.nn.relu)
+        y2 = tf.layers.dense(y1, 10)
+        y_probs = tf.nn.softmax(y2, axis=1)
+        y_predicts = tf.argmax(y2, axis=1)
+        y_probs = tf.reduce_max(y_probs, axis=1)
+
+        if mode == tf.estimator.ModeKeys.PREDICT:
+            predicts = { 'predicts': y_predicts, 'probability': y_probs }
+            return tf.estimator.EstimatorSpec(mode=mode, predictions=predicts)
+
+        yt = tf.cast(labels, tf.int32)
+        loss = tf.losses.sparse_softmax_cross_entropy(yt, y2)
+        accuracy = tf.metrics.accuracy(yt, y_predicts)
+        metrics = {'accuracy': accuracy}
+
+        if mode == tf.estimator.ModeKeys.EVAL:
+            return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=metrics)
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.02)
+        train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
+        return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op,
+                                          training_chief_hooks=[LogviewTrainHook(metrics, tf.train.get_global_step())],
+                                          evaluation_hooks=[EarlyStopping(metrics, tf.train.get_global_step())])
+
+    session_config = tf.ConfigProto(allow_soft_placement=True)
+    run_config = tf.estimator.RunConfig(
+        model_dir=os.path.join(output_path, 'estimator'),
+        session_config=session_config,
+        save_checkpoints_steps=2,
+        keep_checkpoint_max=10,
+        save_summary_steps=1,
+        log_step_count_steps=2
+    )
+
+    model = tf.estimator.Estimator(model_fn, config=run_config)
+    train_input_fn = input_fn1
+    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn, max_steps=10)
+    eval_input_fn = input_fn2
+    eval_spec = tf.estimator.EvalSpec(input_fn=eval_input_fn, start_delay_secs=3, throttle_secs=3)
+
+    # model.evaluate(input_fn2)
+    # try:
+    tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
+    # except:
+    #     print('done...')
+
+    '''
+    def input_fn3():
+        x = tf.constant(np.random.randn(3, 28, 28))
+        dataset = tf.data.Dataset.from_tensor_slices(x)
+        dataset = dataset.shuffle(buffer_size=10).batch(1, drop_remainder=False)
+        iterator = dataset.make_one_shot_iterator()
+        return iterator.get_next()
+
+    results = model.predict(input_fn3)
+    for value in results:
+        print(value)
+    '''
+
+
 def mnist_classify():
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -399,7 +480,7 @@ def mnist_classify2():
                     test_acc += batch_acc
                 test_loss = test_loss / 100.0
                 test_acc = test_acc / 100.0
-                print('==> ibatch: [%d]: testing average_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
+                print('==> ibatch: [%d]: testing avaerage_loss = %f, average_acc = %f' % (icount, test_loss, test_acc))
                 if best_acc < test_acc:
                     best_acc = test_acc
                     saver.save(sess, os.path.join(output_path, 'mnist_cls.ckpt'), global_step=icount)
@@ -407,7 +488,6 @@ def mnist_classify2():
 
     except tf.errors.OutOfRangeError:
         print('end!')
-
 
 
 
@@ -499,6 +579,26 @@ def placeholder_test():
     print(v1, v2)
 
 
+def sample_test():
+    candidates = np.array([[1,1,2,2,2,3,3,3,3,4,4,4,4,4,4,5,5,6,6,7,8,9]])
+    print(candidates.shape)
+    candidates = np.reshape(candidates, (22, 1))
+    print(candidates.shape)
+    sampled_ids, true_expected, sample_expected = tf.nn.log_uniform_candidate_sampler(candidates,
+                                                                                      num_true=1,
+                                                                                      num_sampled=20,
+                                                                                      unique=True,
+                                                                                      range_max=1000)
+    init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+    with tf.Session() as sess:
+        sess.run(init_op)
+        print(sess.run(sampled_ids))
+        print(sess.run(true_expected))
+        print(sess.run(sample_expected))
+
+
+
+
 if __name__ == '__main__':
     # logistic_test(train=False)
     # test002()
@@ -508,7 +608,6 @@ if __name__ == '__main__':
     # minist_test()
     # mnist_classify()
     # mnist_classify2()
-    placeholder_test()
-
-
-
+    # placeholder_test()
+    # sample_test()
+    minist_test_x()
