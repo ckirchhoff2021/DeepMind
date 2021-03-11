@@ -34,7 +34,7 @@ def build_layers(feature_columns, hidden_units):
                 embedding = tf.layers.dense(embedding, unit, activation=tf.nn.relu)
             embedding = tf.layers.dense(embedding, dim, activation=tf.nn.tanh)
             embedding_list.append(embedding)
-        ret = tf.concat(embedding, axis=1)
+        ret = tf.concat(embedding_list, axis=1)
         ret = tf.layers.dense(ret, 32, activation=tf.nn.tanh)
         ret = tf.nn.l2_normalize(ret)
         return ret
