@@ -3,6 +3,7 @@ import tensorflow as tf
 from common_path import *
 from fm_regression import RatingDataset
 from layers import *
+from estimator_model import *
 
 
 def create_model(features, feature_columns, hidden_units, output_cls):
@@ -57,25 +58,15 @@ def regression_test():
     datas = RatingDataset()
     sample_dict, labels = datas.get_samples()
 
-    config = tf.estimator.RunConfig(save_checkpoints_steps=100)
-    model = tf.estimator.Estimator(model_fn=model_fn_builder(0.001, layer_fn), model_dir=os.path.join(output_path, 'regressor'), config=config)
+    run_config = tf.estimator.RunConfig(model_dir=os.path.join(output_path, 'regressor'), save_checkpoints_steps=100, log_step_count_steps=2)
+    model = EmbeddingNet(feature_columns, run_config, hidden_units)
 
     def input_fn():
         dataset = tf.data.Dataset.from_tensor_slices((sample_dict, labels))
         dataset = dataset.shuffle(1000).repeat(1).batch(128)
         return dataset
 
-    # model.train(input_fn=input_fn)
-
-    dataset = tf.data.Dataset.from_tensor_slices((sample_dict, labels))
-    dataset = dataset.shuffle(1000).repeat(1).batch(128)
-    iterator = dataset.make_one_shot_iterator()
-    element = iterator.get_next()
-
-    sess = tf.Session()
-    x = layer_fn(element[0])
-    print(sess.run(x))
-
+    model.train(input_fn=input_fn)
 
 
 
@@ -91,47 +82,51 @@ def test2():
     hidden_units = [32, 64]
     layer_fn = build_layers(feature_columns, hidden_units)
 
-    data_dict = {
-        'age': np.array([1]),
-        'gender':np.array(['M']),
-        'occupation': np.array([112]),
-        'code': np.array(['xyz']),
-        'genres':np.array([['11','22','33']])
+    eval_datas = {
+        'age': np.array([1,2]),
+        'gender':np.array(['M','F']),
+        'occupation': np.array([112, 256]),
+        'code': np.array(['xyz', 'wbs']),
+        'genres':np.array([['11','22','33'], ['21', '03', '45']])
     }
+    eval_labels = np.array([0.8, 0.6],dtype=np.float32)
+    eval_inputs = tf.estimator.inputs.numpy_input_fn(eval_datas, eval_labels, shuffle=False)
 
-    x = layer_fn(data_dict)
-    print(x)
+    train_datas = {
+        'age': np.array([1,1,2,2,3,3,2,3]),
+        'gender':np.array(['M','F','M','F','M','F','M','F']),
+        'occupation': np.array([112,12,13,22,33,44,12,67]),
+        'code': np.array(['xyz','abc','v112','xyz','abc','v112','xyz','abc']),
+        'genres':np.array([['11','22','33'],['11','42','43'],['22','12','43'],['44','32','23'],
+                           ['44','32','23'],['44','32','23'],['44','32','23'],['44','32','23']])
+    }
+    train_labels = np.array([1,2,1,3,2,1,1,2], dtype=np.float32)
+    train_inputs = tf.estimator.inputs.numpy_input_fn(train_datas, train_labels, shuffle=False, batch_size=2, num_epochs=2)
 
-    def model_fn(features, labels, mode, config):
-        embedding = layer_fn(features)
-        logits = tf.layers.dense(embedding, 1, activation=tf.nn.sigmoid)
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=100, model_dir=os.path.join(output_path, 'estimator'))
+    model = EmbeddingNet(feature_columns, run_config, hidden_units)
+    # model.train(train_inputs)
 
-        is_predict = (mode == tf.estimator.ModeKeys.PREDICT)
-        if not is_predict:
-            loss = tf.losses.mean_squared_error(labels=labels, logits=logits)
-            mse = tf.metrics.mean_squared_error(labels=labels, predictions=logits)
-            metrics = {'mse': mse}
-            if mode == tf.estimator.ModeKeys.EVAL:
-                return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=metric_fn(labels, logits))
+    print(model.evaluate(eval_inputs))
 
-            train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss=loss,
-                                                                         global_step=tf.train.get_global_step())
-            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=metrics)
-        else:
-            predictions = {'predicts': logits}
-            return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+    '''
+    feature_op, label_op = train_inputs()
+    with tf.Session() as sess:
+        sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
+        coordinator = tf.train.Coordinator()
+        _ = tf.train.start_queue_runners(coord=coordinator)
+        try:
+            while 1:
+                print(sess.run([feature_op, label_op]))
+        except tf.errors.OutOfRangeError:
+            print('End.')
+    '''
 
-    predict_inputs = tf.estimator.inputs.numpy_input_fn(data_dict, shuffle=False)
-    model = tf.estimator.Estimator(model_fn=model_fn_builder(0.001, layer_fn))
-
-    values = model.predict(predict_inputs)
-    for v in values:
-        print(v)
 
 
 def main():
-    # regression_test()
-    test2()
+    regression_test()
+    # test2()
 
 if __name__ == '__main__':
     main()

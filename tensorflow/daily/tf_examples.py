@@ -598,6 +598,97 @@ def sample_test():
 
 
 
+def multi_inherit():
+    class A:
+        def __init__(self, a1):
+            self.A = a1
+
+        def print_a(self):
+            print(self.A)
+
+    class B:
+        def __init__(self, b1):
+            self.B = b1
+
+        def print_b(self):
+            print(self.B)
+
+    class C(A,B):
+        def __init__(self, x1, y1):
+            super(C,self).__init__(x1)
+            super(A,self).__init__(y1)
+
+    c = C('A','B')
+
+    c.print_a()
+    c.print_b()
+    print(c.A)
+    print(c.B)
+    print(C.__mro__)
+
+
+def test_collection():
+    v1 = tf.get_variable('v1', shape=[1, 2], dtype=tf.float32, initializer=tf.constant_initializer(1.0))
+    tf.add_to_collection('values', v1)
+    v2 = tf.get_variable('v2', shape=[1, 2], dtype=tf.float32, initializer=tf.constant_initializer(2.0))
+    tf.add_to_collection('values', v2)
+    sess = tf.Session()
+    sess.run([tf.global_variables_initializer(), tf.local_variables_initializer()])
+    print(tf.get_collection('values'))
+    print(sess.run(tf.reduce_mean(tf.add_n(tf.get_collection('values')))))
+
+
+def graph_test():
+    tf.logging.set_verbosity(tf.logging.INFO)
+    def return_hash():
+        with tf.variable_scope('hash_variable', reuse=tf.AUTO_REUSE):
+            hash_variables = tf.get_variable('hash', shape=[50, 10], dtype=tf.float32,
+                                             initializer=tf.truncated_normal_initializer(stddev=0.02))
+        return hash_variables
+
+    def model_fn(features, labels, mode):
+        x1 = features['x1']
+        indices = tf.string_to_hash_bucket_fast(x1, 50)
+        hash_variables = return_hash()
+        x3 = tf.nn.embedding_lookup(hash_variables, indices)
+
+        x2 = features['x2']
+        x2 = tf.expand_dims(x2, axis=1)
+        x = tf.concat([x3, x2], axis=1)
+        y = tf.layers.dense(x, 10, activation=tf.nn.relu)
+        logits = tf.layers.dense(y, 1, activation=tf.nn.sigmoid)
+        logits = tf.squeeze(logits)
+
+        is_predict = (mode == tf.estimator.ModeKeys.PREDICT)
+        if is_predict:
+            predictions = {"predict": logits}
+            return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+        else:
+            loss = tf.losses.mean_squared_error(labels=labels, predictions=logits)
+            mse = tf.metrics.mean_squared_error(labels=labels, predictions=logits)
+            metrics = {'mse': mse}
+            if mode == tf.estimator.ModeKeys.EVAL:
+                return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=metrics)
+
+            train_op = tf.train.AdamOptimizer(learning_rate=0.005).minimize(loss=loss, global_step=tf.train.get_global_step())
+            return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=metrics)
+
+    train_datas = {
+        'x1': np.array(['M', 'F', 'M', 'F', 'M', 'F', 'M', 'F']),
+        'x2': np.array([0.11, 0.14, 0.16, 0.08, 0.33, 0.23, 0.05, 0.16], dtype=np.float32),
+    }
+    train_labels = np.array([1.0, 2.0, 1.2, 3.0, 2.0, 1.0, 1.0, 2.0], dtype=np.float32)
+    train_inputs = tf.estimator.inputs.numpy_input_fn(train_datas, train_labels, shuffle=False, batch_size=2, num_epochs=20)
+
+    model = tf.estimator.Estimator(model_fn, model_dir=os.path.join(output_path, 'test'))
+    # model.train(train_inputs)
+
+    predict_inputs = tf.estimator.inputs.numpy_input_fn({'x1': np.array(['F', 'M']), 'x2': np.array([0.1, 0.5], dtype=np.float32)}, shuffle=False)
+    preds = model.predict(predict_inputs)
+    for value in preds:
+        print(value)
+
+
 
 if __name__ == '__main__':
     # logistic_test(train=False)
@@ -610,4 +701,7 @@ if __name__ == '__main__':
     # mnist_classify2()
     # placeholder_test()
     # sample_test()
-    minist_test_x()
+    # minist_test_x()
+    # multi_inherit()
+    # test_collection()
+    graph_test()
