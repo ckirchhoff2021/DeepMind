@@ -19,7 +19,7 @@ class EmbeddingNet(tf.estimator.Estimator):
                 train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss=loss, global_step=tf.train.get_global_step())
                 return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=metrics)
             else:
-                predictions = {'predicts': logits}
+                predictions = {'predicts': logits, 'embedding': embedding}
                 return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
         super(EmbeddingNet, self).__init__(model_fn=_model_fn_, config=run_config)
