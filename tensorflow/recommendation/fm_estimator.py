@@ -107,7 +107,11 @@ def test2():
     model = EmbeddingNet(feature_columns, run_config, hidden_units)
     # model.train(train_inputs)
 
-    print(model.evaluate(eval_inputs))
+    pred_inputs = tf.estimator.inputs.numpy_input_fn(eval_datas, shuffle=False)
+    values = model.predict(pred_inputs)
+    for value in values:
+        print(value)
+
 
     '''
     feature_op, label_op = train_inputs()
@@ -125,8 +129,8 @@ def test2():
 
 
 def main():
-    regression_test()
-    # test2()
+    # regression_test()
+    test2()
 
 if __name__ == '__main__':
     main()
