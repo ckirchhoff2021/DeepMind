@@ -207,7 +207,26 @@ class Solution:
                 ret.append(i)
         return ret
 
-             
+    def compare_node(self, p, q):
+        if (not p and q) or (p and not q):
+            return False
+        if p.val != q.val:
+            return False
+        if not p and not q:
+            return True
+
+        p1 = p.left
+        p2 = p.right
+        q1 = q.right
+        q2 = q.left
+        return self.compare_node(p1, q1) and self.compare_node(p2, q2)
+
+    def isSymmetric(self, root):
+        left = root.left
+        right = root.right
+        return self.compare_node(left, right)
+
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0
