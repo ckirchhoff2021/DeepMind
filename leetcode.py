@@ -226,7 +226,7 @@ class Solution:
         right = root.right
         return self.compare_node(left, right)
 
-             
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0
