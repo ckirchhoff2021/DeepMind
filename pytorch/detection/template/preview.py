@@ -45,6 +45,6 @@ for i, sample in enumerate(preview):
 
     visualize_boxes(image=image, boxes=bboxes, labels=labels, probs=np.array(np.random.randint(100, 101, size=[len(bboxes)])/100), class_labels=class_names)
 
-    write_image(writer, f'preview_{opt.dataset}/{i}', 'image', image, 0, 'HWC')
+    write_image(writer, 'preview_{opt.dataset}/{i}', 'image', image, 0, 'HWC')
 
 writer.flush()

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchvision import transforms
+from torchvision import transforms, models
 
 
 def conv_block(in_chn, out_chn):
@@ -96,7 +96,7 @@ def main():
     x = torch.randn(1,3,256,256)
     y = net(x)
     print(y.size())
-    
+
 
 
 if __name__ == '__main__':

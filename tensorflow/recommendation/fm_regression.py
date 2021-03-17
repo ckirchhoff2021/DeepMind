@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from common_path import *
 import tensorflow as tf
+import random
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -58,6 +59,38 @@ class RatingDataset:
             rating_list.append(rate/5.0)
         return sample_dict, rating_list
 
+    def get_cls_samples(self):
+        samples = list()
+        str_keys = ['age', 'gender', 'occupation', 'code','genres', 'ratings']
+        for index, (user_id, movie_id, rate) in enumerate(self.samples):
+            gender, age, occupation, code = self.user_dict[user_id]
+            title, genres = self.movie_dict[movie_id]
+            genres_list = genres.split('|')
+            while len(genres_list) < 3:
+                genres_list.append('-1024')
+            samples.append([age, gender, occupation, code, genres_list[:3], rate-1])
+        random.shuffle(samples)
+        count = len(samples)
+        nx = int(count * 0.9)
+        train_samples = samples[:nx]
+        test_samples = samples[nx:]
+
+        def construct_sample(datas):
+            sample_dict = dict()
+            sample_labels = list()
+            count = len(str_keys)
+            for data in datas:
+                for i in range(count - 1):
+                    key = str_keys[i]
+                    if key not in sample_dict.keys():
+                        sample_dict[key] = list()
+                    sample_dict[key].append(data[i])
+                sample_labels.append(data[count - 1])
+            return sample_dict, sample_labels
+
+        train_samples, train_labels = construct_sample(train_samples)
+        test_samples, test_labels = construct_sample(test_samples)
+        return train_samples, train_labels, test_samples, test_labels
 
 class FMRegressor:
     @staticmethod

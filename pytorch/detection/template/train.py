@@ -120,7 +120,7 @@ try:
             pre_msg = 'Epoch:%d' % epoch
 
             # 显示进度条
-            msg = f'lr:{round(scheduler.get_lr()[0], 6) : .6f} (loss) {str(model.avg_meters)} ETA: {utils.format_time(remaining)}'
+            msg = 'lr:{round(scheduler.get_lr()[0], 6) : .6f} (loss) {str(model.avg_meters)} ETA: {utils.format_time(remaining)}'
             utils.progress_bar(iteration, len(train_dataloader), pre_msg, msg)
             # print(pre_msg, msg)
 
@@ -128,7 +128,7 @@ try:
                 write_meters_loss(writer, 'train', model.avg_meters, global_step)
 
         # 记录训练日志
-        logger.info(f'Train epoch: {epoch}, lr: {round(scheduler.get_lr()[0], 6) : .6f}, (loss) ' + str(model.avg_meters))
+        logger.info('Train epoch: {epoch}, lr: {round(scheduler.get_lr()[0], 6) : .6f}, (loss) ' + str(model.avg_meters))
 
         if epoch % opt.save_freq == 0 or epoch == opt.epochs:  # 最后一个epoch要保存一下
             model.save(epoch)

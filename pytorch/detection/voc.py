@@ -1,8 +1,10 @@
-from torchvision import datasets, transforms
 import torch
-from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
+from torchvision import datasets, transforms
+from torch.utils.data import Dataset, DataLoader
+
+import random
 
 
 label_list = [
@@ -13,14 +15,14 @@ label_list = [
 
 train_transforms = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize(mean=(0.4914, 0.4822, 0.4465), std=(0.2023, 0.1994, 0.2010))
+    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 ])
 
 class VocDataset(Dataset):
     def __init__(self, train=True, image_size=448):
         super(VocDataset, self).__init__()
-        self.datas = list()
-        self.targets = list()
+        self.voc_origin = datasets.VOCDetection('/Users/chenxiang/Downloads/Gitlab/Deepmind/datas/', download=False)
+        self.indices = None
         self.image_size = image_size
         self.train = train
         self.initialize()
@@ -29,28 +31,24 @@ class VocDataset(Dataset):
         return len(self.datas)
     
     def __getitem__(self, item):
-        return self.datas[item], self.targets[item]
-        
+        index = self.indices[item]
+        image_data, image_annotate = self.voc_origin[index]
+        data_size = image_data.size
+        image_data = image_data.resize((self.image_size, self.image_size))
+        image_tensor = train_transforms(image_data)
+        target = self.generate_label(image_annotate, data_size)
+        return image_data, target
+
     def initialize(self):
-        voc_datas = datasets.VOCDetection('../datas', download=False)
-        data_num = len(voc_datas)
-        seg = int(0.001* data_num)
+        data_num = len(self.voc_origin)
+        indices = list(range(data_num))
+        random.shuffle(indices)
+        seq = int(0.1* data_num)
         if self.train:
-            indices = list(range(0, data_num-seg))
+            self.indices = indices[0:data_num-seq]
         else:
-            indices = list(range(data_num-seg, data_num))
-        
-        for index in indices:
-            data = voc_datas[index]
-            image_data = data[0]
-            data_size = image_data.size
-            
-            image_data = image_data.resize((self.image_size, self.image_size))
-            image_tensor = train_transforms(image_data)
-            self.datas.append(image_tensor)
-            target = self.generate_label(data[1], data_size)
-            self.targets.append(target)
-    
+            self.indices = indices[data_num-seq:]
+
     
     def box_transform(self, bbox, data_size):
         w, h = data_size
@@ -88,15 +86,21 @@ class VocDataset(Dataset):
             bbox = object['bndbox']
             cx, cy, w, h = self.box_transform(bbox, data_size)
             row, col = int(cx/unit), int(cy/unit)
-            
+
             label[row][col][:20] = obj_onehot
-            label[row][col][20:22] = [1, 0]
-            label[row][col][22:26] = np.array([cx, cy, w, h]) / self.image_size
+
+            if label[row][col][20] == 0:
+                label[row][col][20] = 1
+                label[row][col][22:26] = np.array([cx, cy, w, h]) / self.image_size
+            else:
+                label[row][col][21] = 1
+                label[row][col][26:30] = np.array([cx, cy, w, h]) / self.image_size
         
         return torch.from_numpy(label)
 
 
 def main():
+    '''
     voc = datasets.VOCSegmentation('../datas', download=False, image_set='train')
     print(len(voc))
     image_data, mask = voc[2]
@@ -110,6 +114,28 @@ def main():
     color_images = Image.fromarray(colors)
     color_images.putpalette(color_palette)
     color_images.show()
+    '''
+
+    data = VocDataset()
+    data, labels = data[1]
+
+    draw = ImageDraw.Draw(data)
+    for i in range(7):
+        for j in range(7):
+            annotates = labels[i][j].numpy()
+            if annotates[20] == 1:
+                x,y,w,h = annotates[22:26]
+                x1, y1 = int(448 * x - 224 * w), int(448 * y - 224 * h)
+                x2, y2 = int(448 * x + 224 * w), int(448 * y + 224 * h)
+                draw.rectangle((x1,y1,x2,y2), outline='red')
+
+            if annotates[21] == 1:
+                x,y,w,h = annotates[26:30]
+                x1, y1 = int(448 * x - 224 * w), int(448 * y - 224 * h)
+                x2, y2 = int(448 * x + 224 * w), int(448 * y + 224 * h)
+                draw.rectangle((x1, y1, x2, y2), outline='red')
+
+    data.show()
    
 
 if __name__ == '__main__':

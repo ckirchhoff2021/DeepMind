@@ -17,7 +17,7 @@ import pdb
 def evaluate(model, dataloader, epoch, writer, logger, data_name='val'):
     # 每个模型的evaluate方式不同
     loss = model.evaluate(dataloader, epoch, writer, logger, data_name)
-    return f'{loss}'
+    return '{loss}'
 
 
 if __name__ == '__main__':

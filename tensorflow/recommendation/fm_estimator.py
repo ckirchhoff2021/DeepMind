@@ -69,6 +69,39 @@ def regression_test():
     model.train(input_fn=input_fn)
 
 
+def cls_test():
+    tf.logging.set_verbosity(tf.logging.INFO)
+    feature_columns = [
+        {'feature_name': 'age', 'embedding_dim': 10, 'hash_buckets': 100, 'type': 'int', 'sequence': 1},
+        {'feature_name': 'gender', 'embedding_dim': 10, 'hash_buckets': 10, 'type': 'string', 'sequence': 1},
+        {'feature_name': 'occupation', 'embedding_dim': 10, 'hash_buckets': 1000, 'type': 'int', 'sequence': 1},
+        {'feature_name': 'code', 'embedding_dim': 10, 'hash_buckets': 10000, 'type': 'string', 'sequence': 1},
+        {'feature_name': 'genres', 'embedding_dim': 10, 'hash_buckets': 1000, 'type': 'string', 'sequence': 3},
+    ]
+    hidden_units = [32, 64]
+    layer_fn = build_layers(feature_columns, hidden_units)
+    datas = RatingDataset()
+    train_samples, train_labels, test_samples, test_labels = datas.get_cls_samples()
+
+    run_config = tf.estimator.RunConfig(model_dir=os.path.join(output_path, 'cls'), save_checkpoints_steps=100, log_step_count_steps=10)
+    model = EmbeddingNet(feature_columns, run_config, hidden_units)
+
+    def train_input_fn():
+        dataset = tf.data.Dataset.from_tensor_slices((train_samples, train_labels))
+        dataset = dataset.shuffle(1000).repeat(1).batch(128)
+        return dataset
+
+    def eval_input_fn():
+        dataset = tf.data.Dataset.from_tensor_slices((test_samples, test_labels))
+        dataset = dataset.shuffle(1000).repeat(1).batch(64)
+        return dataset
+
+    train_spec = tf.estimator.TrainSpec(train_input_fn, max_steps=10000)
+    eval_spec = tf.estimator.EvalSpec(eval_input_fn,start_delay_secs=10, throttle_secs=20)
+
+    tf.estimator.train_and_evaluate(model, train_spec, eval_spec)
+
+
 
 def test2():
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -130,7 +163,8 @@ def test2():
 
 def main():
     # regression_test()
-    test2()
+    # test2()
+    cls_test()
 
 if __name__ == '__main__':
     main()

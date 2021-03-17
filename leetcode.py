@@ -3,6 +3,12 @@ class ListNode:
         self.val = val
         self.next = next
 
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
 
 class Solution:
     def addTwoNumbers(self, l1: ListNode, l2: ListNode) -> ListNode:
@@ -226,6 +232,25 @@ class Solution:
         right = root.right
         return self.compare_node(left, right)
 
+    def levelOrderBottom(self, root):
+        node_list = []
+        ret = []
+        if root:
+            node_list.append(root)
+        while len(node_list) > 0:
+            layer = []
+            nodes = list()
+            for node in node_list:
+                layer.append(node.val)
+                if node.left:
+                    nodes.append(node.left)
+                if node.right:
+                    nodes.append(node.right)
+            node_list = nodes
+            ret.append(layer)
+        ret.reverse()
+        return ret
+
 
 def merged_sorted(a1, a2):
     i1 = 0
@@ -311,6 +336,15 @@ def main():
     value = solution.findSubstring(s, words)
     print(value)
 
+    print(' -- levelOrderBottom -- ')
+    k1 = TreeNode(3)
+    k1.left = TreeNode(9)
+    k1.right = TreeNode(20)
+    k1.right.left = TreeNode(15)
+    k1.right.right = TreeNode(7)
+
+    value = solution.levelOrderBottom(k1)
+    print(value)
 
 
 

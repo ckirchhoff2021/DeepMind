@@ -5,7 +5,7 @@ class EmbeddingNet(tf.estimator.Estimator):
         self.feature_columns = feature_config
         self.hidden_units = hidden_units
 
-        def _model_fn_(features, labels, mode, config):
+        def _regression_model_fn_(features, labels, mode, config):
             embedding = self.layer_fn(features)
             logits = tf.layers.dense(embedding, 1, activation=tf.nn.sigmoid)
             logits = tf.squeeze(logits)
@@ -22,7 +22,27 @@ class EmbeddingNet(tf.estimator.Estimator):
                 predictions = {'predicts': logits, 'embedding': embedding}
                 return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-        super(EmbeddingNet, self).__init__(model_fn=_model_fn_, config=run_config)
+        def _cls_model_fn_(features, labels, mode, config):
+            embedding = self.layer_fn(features)
+            logits = tf.layers.dense(embedding, 5)
+            is_predict = (mode == tf.estimator.ModeKeys.PREDICT)
+            
+            if not is_predict:
+                loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+                predicts = tf.argmax(logits, axis=1)
+                accuracy = tf.metrics.accuracy(labels=labels, predictions=predicts)
+                # auc = tf.metrics.auc(labels=labels, predictions=predicts)
+                metrics = {'acc': accuracy}
+                if mode == tf.estimator.ModeKeys.EVAL:
+                    return tf.estimator.EstimatorSpec(mode=mode, loss=loss, eval_metric_ops=metrics)
+                train_op = tf.train.AdamOptimizer(learning_rate=lr).minimize(loss=loss,global_step=tf.train.get_global_step())
+                return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, eval_metric_ops=metrics)
+            else:
+                predicts = tf.argmax(logits, axis=1)
+                predictions = {'predicts': predicts}
+                return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+
+        super(EmbeddingNet, self).__init__(model_fn=_cls_model_fn_, config=run_config)
 
     def layer_fn(self, features):
         embedding_list = list()
