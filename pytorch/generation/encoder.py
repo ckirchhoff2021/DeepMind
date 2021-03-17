@@ -6,6 +6,9 @@ from PIL import Image
 from common_path import *
 from tensorboardX import SummaryWriter
 
+import cv2
+import numpy as np
+
 
 
 class VGGLoss(nn.Module):
@@ -81,7 +84,7 @@ def main():
     y = net(x)
     print(y.size())
     
-    image_file = '/Users/chenxiang/Downloads/Gitlab/Deepmind/style/res/sky.jpg'
+    image_file = os.path.join(data_path, 'gauss.png')
     image_data = Image.open(image_file)
     image_transform = transforms.Compose([
         transforms.Resize((256,256)),
@@ -100,10 +103,10 @@ def main():
     for param in perceptural_loss.parameters():
         param.requires_grad = False
 
-    '''
+
     writer = SummaryWriter(os.path.join(output_path, 'summary'))
 
-    for epoch in range(3000):
+    for epoch in range(300):
         y = net(x)
         x1, x2 = perceptural_loss(x)
         y1, y2 = perceptural_loss(y)
@@ -137,8 +140,18 @@ def main():
     new_image.paste(x1, (0,0, 256, 256))
     new_image.paste(y1, (256,0,512,256))
     new_image.show()
-
+    '''
 
 
 if __name__ == '__main__':
     main()
+
+    '''
+    k1 = cv2.getGaussianKernel(256, 128)
+    k2 = k1.T
+    k3 = k1 * k2
+    k3 = k3 / np.max(k3) * 255.0
+    k3 = k3.astype(np.uint8)
+    heat = cv2.applyColorMap(k3, cv2.COLORMAP_JET)
+    cv2.imwrite(os.path.join(data_path, 'gauss.png'), heat)
+    '''
