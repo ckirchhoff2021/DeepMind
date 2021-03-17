@@ -21,7 +21,7 @@ train_transforms = transforms.Compose([
 class VocDataset(Dataset):
     def __init__(self, train=True, image_size=448):
         super(VocDataset, self).__init__()
-        self.voc_origin = datasets.VOCDetection('/Users/chenxiang/Downloads/Gitlab/Deepmind/datas/', download=False)
+        self.voc_origin = datasets.VOCDetection('/Users/chenx/Desktop/study/data', download=False)
         self.indices = None
         self.image_size = image_size
         self.train = train
@@ -37,7 +37,7 @@ class VocDataset(Dataset):
         image_data = image_data.resize((self.image_size, self.image_size))
         image_tensor = train_transforms(image_data)
         target = self.generate_label(image_annotate, data_size)
-        return image_data, target
+        return image_tensor, target
 
     def initialize(self):
         data_num = len(self.voc_origin)
@@ -116,8 +116,13 @@ def main():
     color_images.show()
     '''
 
-    data = VocDataset()
-    data, labels = data[1]
+    datas = VocDataset()
+    data, labels = datas[1]
+    mean = np.array([[[0.485]], [[0.456]], [[0.406]]])
+    std = np.array([[[0.229]], [[0.224]], [[0.225]]])
+    data2 = data.numpy() * std + mean
+    data_reverse = torch.from_numpy(data2.astype(np.float32))
+    data = transforms.ToPILImage()(data_reverse)
 
     draw = ImageDraw.Draw(data)
     for i in range(7):

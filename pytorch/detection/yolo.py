@@ -163,8 +163,10 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # predict()
+
+    '''
     coco = datasets.CocoDetection(root="/Users/chenxiang/Downloads/dataset/cocos/train2014",
                                    annFile="/Users/chenxiang/Downloads/dataset/cocos/annotations/instances_train2014.json")
     coco = COCO(annotation_file="/Users/chenxiang/Downloads/dataset/cocos/annotations/instances_train2014.json")
@@ -175,3 +177,4 @@ if __name__ == '__main__':
 
     nms = set([cat['supercategory'] for cat in cats])
     print('COCO supercategories: \n'.format(' '.join(nms)))
+    '''

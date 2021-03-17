@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class YoloLoss(nn.Module):
@@ -7,7 +8,7 @@ class YoloLoss(nn.Module):
         super(YoloLoss, self).__init__()
         self.w_coord = 5
         self.w_noobj = 0.5
-    
+
     @staticmethod
     def calculate_IOU(b1, b2):
         dw = (b1[0] - b2[0]).abs()
@@ -28,52 +29,62 @@ class YoloLoss(nn.Module):
         return IOU
     
     def forward(self, outputs, targets):
-        obj_exists = targets[:,:,:,20]
-        nums = outputs.size(0)
-        
-        prob_loss = 0.0
-        position_loss = 0.0
-        size_loss = 0.0
-        confidence_loss1 = 0.0
-        confidence_loss2 = 0.0
-        
-        for inum in range(nums):
-            for irow in range(7):
-                for icol in range(7):
-                    
-                    if obj_exists[inum, irow, icol] == 0:
-                        continue
-                    
-                    probs = (targets[inum, irow, icol, :20] - outputs[inum, irow, icol, :20]) ** 2
-                    prob_loss += probs.sum()
-                        
-                    gt_box = targets[inum, irow, icol, 22:26]
-                    pred_box1 = outputs[inum, irow, icol, 22:26]
-                    iou1 = self.calculate_IOU(gt_box, pred_box1)
+        gt_b1 = targets[:, :, :, 20]
+        gt_x1 = targets[:, :, :, 22]
+        gt_y1 = targets[:, :, :, 23]
+        gt_w1 = targets[:, :, :, 24]
+        gt_h1 = targets[:, :, :, 25]
 
-                    pred_box2 = outputs[inum, irow, icol, 26:]
-                    iou2 = self.calculate_IOU(gt_box, pred_box2)
-                    
-                    if iou1 > iou2:
-                        chosen_box = pred_box1
-                        pred_c1 = outputs[inum, irow, icol, 20]
-                        pred_c2 = outputs[inum, irow, icol, 21]
-                    else:
-                        chosen_box = pred_box2
-                        pred_c1 = outputs[inum, irow, icol, 21]
-                        pred_c2 = outputs[inum, irow, icol, 20]
-                    
-                    x1, y1, w1, h1 = gt_box
-                    x2, y2, w2, h2 = chosen_box
-                    
-                    position_loss += ((x1 - x2) ** 2 + (y1 - y2) ** 2)
-                    size_loss += ((torch.sqrt(w1) - torch.sqrt(w2)) ** 2 + (torch.sqrt(h1) - torch.sqrt(h2)) ** 2)
-                    confidence_loss1 += (pred_c1 - 1.0) ** 2
-                    confidence_loss2 += (pred_c2 - 1.0) ** 2
-        
-        losses = self.w_coord * (position_loss + size_loss) + confidence_loss1 + self.w_noobj * confidence_loss2 + prob_loss
+        gt_b2 = targets[:, :, :, 21]
+        gt_x2 = targets[:, :, :, 26]
+        gt_y2 = targets[:, :, :, 27]
+        gt_w2 = targets[:, :, :, 28]
+        gt_h2 = targets[:, :, :, 29]
+
+        yt_b1 = outputs[:, :, :, 20]
+        yt_x1 = outputs[:, :, :, 22]
+        yt_y1 = outputs[:, :, :, 23]
+        yt_w1 = outputs[:, :, :, 24]
+        yt_h1 = outputs[:, :, :, 25]
+
+        yt_b2 = outputs[:, :, :, 21]
+        yt_x2 = outputs[:, :, :, 26]
+        yt_y2 = outputs[:, :, :, 27]
+        yt_w2 = outputs[:, :, :, 28]
+        yt_h2 = outputs[:, :, :, 29]
+
+        gt_p = targets[:, :, :, 0:20]
+        yt_p = outputs[:, :, :, 0:20]
+
+        loss_position = gt_b1 * ((yt_x1 - gt_x1) ** 2 + (yt_y1 - gt_y1) ** 2) + \
+                      gt_b2 * ((yt_x2 - gt_x2) ** 2 + (yt_y2 - gt_y2) ** 2)
+
+        loss_size = gt_b1 * ((yt_w1 ** 0.5 - gt_w1 ** 0.5) ** 2 + (yt_h1 ** 0.5 - gt_h1 ** 0.5) ** 2) + \
+                      gt_b2 * ((yt_w2 ** 0.5 - gt_w2 ** 0.5) ** 2 + (yt_h2 ** 0.5 - gt_h2 ** 0.5) ** 2)
+
+        loss_cls = (gt_b2 + gt_b1).unsqueeze(3) * ((gt_p - yt_p) ** 2)
+
+        loss_cf_obj = gt_b1 * ((yt_b1 -gt_b1) ** 2)  + gt_b2 * ((yt_b2 - gt_b2) ** 2)
+        loss_cf_noobj = (1 - gt_b1) * ((yt_b1 -gt_b1) ** 2)  + (1 - gt_b2) * ((yt_b2 - gt_b2) ** 2)
+
+        loss_position = torch.mean(loss_position)
+        loss_size = torch.mean(loss_size)
+        loss_cls = torch.mean(loss_cls)
+        loss_cf_obj = torch.mean(loss_cf_obj)
+        loss_cf_noobj = torch.mean(loss_cf_noobj)
+
+        losses = self.w_coord * (loss_position + loss_size) + loss_cf_obj +  self.w_noobj * loss_cf_noobj + loss_cls
         return losses
-                    
-                    
+
+
+if __name__ == '__main__':
+    criterion = YoloLoss()
+    x1 = torch.randn(1,7,7,30)
+    x2 = torch.randn(1,7,7,30)
+    x1[:, :, :, 20:] = F.sigmoid(x1[:, :, :, 20:])
+    x2[:, :, :, 20:] = F.sigmoid(x2[:, :, :, 20:])
+
+    loss = criterion(x1, x2)
+    print(loss)
                     
         
