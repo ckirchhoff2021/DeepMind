@@ -21,14 +21,14 @@ train_transforms = transforms.Compose([
 class VocDataset(Dataset):
     def __init__(self, train=True, image_size=448):
         super(VocDataset, self).__init__()
-        self.voc_origin = datasets.VOCDetection('/Users/chenx/Desktop/study/data', download=False)
+        self.voc_origin = datasets.VOCDetection('/Users/chenxiang/Downloads/Gitlab/Deepmind/datas', download=False)
         self.indices = None
         self.image_size = image_size
         self.train = train
         self.initialize()
         
     def __len__(self):
-        return len(self.datas)
+        return len(self.indices)
     
     def __getitem__(self, item):
         index = self.indices[item]

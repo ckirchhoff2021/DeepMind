@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class YoloLoss(nn.Module):
@@ -72,6 +71,8 @@ class YoloLoss(nn.Module):
         loss_cls = torch.mean(loss_cls)
         loss_cf_obj = torch.mean(loss_cf_obj)
         loss_cf_noobj = torch.mean(loss_cf_noobj)
+        print('==> loss distribution: loss_position = %.3f, loss_size = %.3f, loss_cls = %.3f, loss_cf_obj = %.3f, loss_cf_noobj = %.3f' % (
+            loss_position.item(), loss_size.item(), loss_cls.item(), loss_cf_obj.item(), loss_cf_noobj.item()))
 
         losses = self.w_coord * (loss_position + loss_size) + loss_cf_obj +  self.w_noobj * loss_cf_noobj + loss_cls
         return losses
@@ -81,8 +82,9 @@ if __name__ == '__main__':
     criterion = YoloLoss()
     x1 = torch.randn(1,7,7,30)
     x2 = torch.randn(1,7,7,30)
-    x1[:, :, :, 20:] = F.sigmoid(x1[:, :, :, 20:])
-    x2[:, :, :, 20:] = F.sigmoid(x2[:, :, :, 20:])
+    activate = nn.Sigmoid()
+    x1[:, :, :, 20:] = activate(x1[:, :, :, 20:])
+    x2[:, :, :, 20:] = activate(x2[:, :, :, 20:])
 
     loss = criterion(x1, x2)
     print(loss)

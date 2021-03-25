@@ -10,8 +10,12 @@ from collections import OrderedDict
 from pycocotools.coco import COCO
 
 from torchvision import models, transforms, datasets
+from common_path import *
 
-model_path = 'output/yolo.pth'
+model_path = os.path.join(output_path, 'yolo.pth')
+
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 def residual_net():
     net = models.resnet18(pretrained=True, progress=True)
@@ -33,7 +37,7 @@ class YoloNet(nn.Module):
     def forward(self, x):
         y = self.net(x)
         y = y.view(y.size(0), 7, 7, 30)
-        y1 = F.softmax(y[:,:,:,0:20], dim=1)
+        y1 = F.softmax(y[:,:,:,0:20], dim=3)
         y2 = self.sigmoid(y[:,:,:,20:])
         y_out = torch.cat((y1,y2), dim=3)
         return y_out
@@ -41,28 +45,30 @@ class YoloNet(nn.Module):
 
 def start_train():
     print('==> start training loop......')
-    net = residual_net()
-    net = nn.DataParallel(net)
-    net.cuda()
+    net = YoloNet()
+    # net = nn.DataParallel(net)
+    # net.cuda()
     
-    optimizer = opt.Adam(net.parameters(), lr = 0.001)
+    optimizer = opt.SGD(net.parameters(), lr = 0.0005, momentum=0.09)
     criterion = YoloLoss()
-    criterion.cuda()
+    # criterion.cuda()
     
     train_dataset = VocDataset(train=True)
-    batches = int(len(train_dataset) / 64)
-    train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=64, num_workers=4)
+    batch_size = 1
+    batches = int(len(train_dataset) / batch_size)
+    train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=1)
     
-    test_dataset = VocDataset(test=True)
-    test_dataloader = DataLoader(test_dataset, shuffle=True, batch_size=32)
+    test_dataset = VocDataset(train=False)
+    test_dataloader = DataLoader(test_dataset, shuffle=True, batch_size=batch_size)
     
-    print('--All data : train - %d, test - %d' % (len(train_dataset), len(test_dataset)))
+    print('--All data : train num =  %d, test num = %d' % (len(train_dataset), len(test_dataset)))
 
     for epoch in range(30):
         net.train()
         losses = 0.0
         for index, (datas, labels) in enumerate(train_dataloader):
-            inputs, targets = datas.cuda(), labels.cuda()
+            # inputs, targets = datas.cuda(), labels.cuda()
+            inputs, targets = datas, labels
             outputs = net(inputs)
             loss = criterion(outputs, targets)
             losses += loss.item()
@@ -163,7 +169,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    start_train()
+    # main()
     # predict()
 
     '''

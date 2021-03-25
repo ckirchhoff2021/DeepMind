@@ -141,6 +141,21 @@ class Solution:
 
         return dp[-1]
 
+    def reverse_list(self, root):
+        p = root
+        q = p.next
+        if q is None:
+            return p
+
+        p.next = None
+        while q:
+            r = q.next
+            q.next = p
+            p = q
+            q = r
+        return p
+
+
     def countAndSay(self, n) -> str:
         if n == 1:
             return '1'
@@ -251,6 +266,17 @@ class Solution:
         ret.reverse()
         return ret
 
+    def maxProfit(self, prices):
+        max_profit = 0
+        min_price = 100000
+        for value in prices:
+            if value < min_price:
+                min_price = value
+            profit = value - min_price
+            if profit > max_profit:
+                max_profit = profit
+        return max_profit
+
 
 def merged_sorted(a1, a2):
     i1 = 0
@@ -346,6 +372,21 @@ def main():
     value = solution.levelOrderBottom(k1)
     print(value)
 
+    print(' -- maxProfit -- ')
+    values = [7,1,5,3,6,4]
+    value = solution.maxProfit(values)
+    print(value)
+
+
+    print(' -- reverse list --')
+    k1 = ListNode(5)
+    k1.next = ListNode(6)
+    k1.next.next = ListNode(4)
+    k1.next.next.next = ListNode(9)
+    kn = solution.reverse_list(k1)
+    while kn:
+        print(kn.val)
+        kn = kn.next
 
 
 if __name__ == '__main__':
