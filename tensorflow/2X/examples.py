@@ -393,13 +393,111 @@ def test004():
     timeit(ds3, batch_size, 2 * steps_per_epoch + 1)
 
 
+def focal_loss_test():
+    def loss(logits, labels, alpha, gamma):
+        predictions = tf.nn.sigmoid(logits)
+        zeros = tf.zeros_like(predictions, dtype=predictions.dtype)
+        pos = tf.where(labels > zeros, labels-predictions, zeros)
+        neg = tf.where(labels > zeros, zeros, predictions)
+        fl_loss = -alpha * (pos ** gamma) * tf.math.log(predictions) - (1.0 - alpha) * (neg ** gamma) * tf.math.log(1.0 - predictions)
+        fl_loss = tf.reduce_mean(fl_loss)
+        return fl_loss
+
+    logit = tf.random.normal([10,1])
+    labels = tf.transpose(tf.constant([[1,0,1,0,1,1,1,0,0,1]],dtype=tf.float32))
+    alpha = 0.25
+    gamma = 2
+
+    value = loss(logit, labels, alpha, gamma)
+    print(value)
+
+
+def logical_operator():
+    x1 = tf.constant(['a', 'b'])
+    x2 = tf.constant(['b', 'a'])
+
+    x3 = tf.logical_and(x1=='a', x2=='b')
+    x4 = tf.logical_or(x1=='a', x2=='b')
+    print(x3)
+    print(x4)
+
+    x5 = tf.zeros_like(x1, dtype=tf.bool)
+    print(x1=='a')
+    print(x2=='a')
+    print(x5)
+
+    x6 = tf.where(x1=='e', x1, '0')
+    print(x6)
+
+    x7 = tf.cast(x3, tf.float32)
+    print(x7)
+
+    ids = tf.SparseTensor(indices=[[0, 1],
+                                   [0, 3],
+                                   [1, 2],
+                                   [1, 3]],
+                          values=['Y', 'N', 'Y', 'N'],
+                          dense_shape=[2, 4])
+
+    print(tf.compat.v1.sparse_tensor_to_dense(ids))
+    x8 = tf.constant([12, 5, 6, 1, 17])
+    y = tf.logical_and(x8>=6, x8 <=12)
+    print('y:', y)
+
+
+def loss_check():
+    new_tags = tf.constant(['Y', 'Y', 'N', 'N', 'Y', 'N', 'N', 'N'])
+    inactive_tags = tf.constant(['Y', 'Y', 'Y', 'N', 'Y', 'Y', 'Y', 'N'])
+    new_coords = tf.where(new_tags == 'Y', True, False)
+    inactive_coords = tf.logical_and(new_tags == 'N', inactive_tags == 'Y')
+    old_coords = tf.where(inactive_tags == 'N', True, False)
+
+    print('new:', new_coords)
+    print('inactive:', inactive_coords)
+    print('old:', old_coords)
+
+    alpha = 0.25
+    gamma = 2.0
+    beta = 8.0
+
+    logits = tf.random.normal([8, 1])
+    labels = tf.transpose(tf.constant([[1, 0, 1, 0, 1, 1, 1, 0]], dtype=tf.float32))
+
+    predictions = tf.nn.sigmoid(logits)
+    zeros = tf.zeros_like(predictions, dtype=predictions.dtype)
+    pos = tf.where(labels > zeros, labels - predictions, zeros)
+    neg = tf.where(labels > zeros, zeros, predictions * beta)
+
+    fl_loss = -alpha * (pos ** gamma) * tf.math.log(predictions) - (1.0 - alpha) * (neg ** gamma) * tf.math.log(1.0 - predictions)
+    fl_loss = tf.squeeze(fl_loss)
+    print('fl_loss :', fl_loss)
+
+    new_loss = tf.reduce_mean(fl_loss * tf.cast(new_coords, tf.float32))
+    inactive_loss = tf.reduce_mean(fl_loss * tf.cast(inactive_coords, tf.float32))
+    old_loss = tf.reduce_mean(fl_loss * tf.cast(old_coords, tf.float32))
+    loss = 1.6 * new_loss + 1.2 * inactive_loss + 1.0 * old_loss
+
+    print('new loss: ', new_loss)
+    print('inactive loss: ', inactive_loss)
+    print('old loss: ', old_loss)
+    print('loss :', loss)
+
+    logits = tf.random.normal([8])
+    labels = tf.constant([1, 0, 1, 0, 1, 1, 1, 0], dtype=tf.float32)
+    loss2 = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
+    print(loss2)
+
+
 
 def main():
-    test_001()
+    # test_001()
     # test_002()
     # test_003()
     # kerastune_test()
     # test004()
+    # focal_loss_test()
+    logical_operator()
+    # loss_check()
 
 
 if __name__ == '__main__':

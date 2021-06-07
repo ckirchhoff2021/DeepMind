@@ -690,6 +690,25 @@ def graph_test():
 
 
 
+def loss_test():
+    logits = tf.placeholder(tf.float32, shape=[None, 1])
+    targets = tf.placeholder(tf.float32, shape=[None, 1])
+
+    loss_op = tf.nn.weighted_cross_entropy_with_logits(targets, logits, 10)
+    init_op = [tf.global_variables_initializer(), tf.local_variables_initializer()]
+
+    x1 = np.random.randn(10, 1)
+    y1 = np.array([[1,0,1,0,1,1,1,0,0,1]])
+    y1 = y1.T
+    print(y1.shape)
+
+    with tf.Session() as sess:
+        sess.run(init_op)
+        vloss = sess.run(loss_op, feed_dict={targets:y1, logits:x1})
+        print(vloss)
+
+
+
 if __name__ == '__main__':
     # logistic_test(train=False)
     # test002()
@@ -704,4 +723,5 @@ if __name__ == '__main__':
     # minist_test_x()
     # multi_inherit()
     # test_collection()
-    graph_test()
+    # graph_test()
+    loss_test()
