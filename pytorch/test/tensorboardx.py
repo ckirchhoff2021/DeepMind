@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms, datasets
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
-
 import numpy as np
 
 
@@ -47,8 +46,8 @@ def summary_test():
     epochs = 100
     for epoch in range(epochs):
         x = epoch
-        writer.add_scalar('data/scalar', x * np.sin(x), x)
-        # writer.add_scalar('data/scalar', x * np.cos(x), x)
+        # writer.add_scalar('data/scalar', x * np.sin(x), x)
+        writer.add_scalars('data/scalar', {'y1': x * np.cos(x),'y2': x * np.sin(x)}, x)
 
     writer.close()
 

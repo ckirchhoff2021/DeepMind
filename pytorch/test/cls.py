@@ -5,6 +5,9 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import models, transforms, datasets
 
+from torchsummary import summary
+from torch.utils.tensorboard import SummaryWriter
+
 data_root = '/Users/chenxiang/Downloads/Gitlab/Deepmind/datas'
 
 image_transform = transforms.Compose([
@@ -140,9 +143,10 @@ def start_train():
     print('==> test datas: ', len(test_datas))
 
     n_batch = int(len(train_datas) / batch_size) + 1
-    epochs = 2
+    epochs = 20
     best_acc = 0
 
+    scalar_summary = SummaryWriter(comment='metric')
     criterion = nn.CrossEntropyLoss()
     opt = optimizer.Adam(net.parameters(), lr=0.005)
     for epoch in range(epochs):
@@ -158,6 +162,10 @@ def start_train():
             correct = preds.eq(label).sum().item()
             corrects += correct
             counts += len(data)
+
+            scalar_summary.add_scalar('loss', loss, index + epoch * len(train_loader))
+            scalar_summary.add_scalar('accuracy', correct / len(data), index + epoch * len(train_loader))
+
             if index % 100 == 0:
                 print('==> training: epoch [%d]/[%d]-[%d]/[%d], loss = %f, acc = %f' % (epoch, epochs, index, n_batch, loss.item(), correct/len(data)))
 
@@ -167,6 +175,8 @@ def start_train():
 
         train_acc = corrects / counts
         train_loss = losses / n_batch
+        scalar_summary.add_scalar('average_loss', train_loss, epoch)
+        scalar_summary.add_scalars('average_accuracy', {"train": train_acc}, epoch)
         print('==> training: epoch [%d]/[%d], loss = %f, acc = %f' % (epoch, 2, train_loss, train_acc))
 
         net.eval()
@@ -179,6 +189,7 @@ def start_train():
             corrects += correct
             counts += len(data)
         test_acc = corrects / counts
+        scalar_summary.add_scalars('average_accuracy', {"test": test_acc}, epoch)
         print('==> testing: epoch [%d]/[%d],  acc = %f' % (epoch, 2, test_acc))
 
         if best_acc < test_acc:
@@ -199,10 +210,10 @@ if __name__ == '__main__':
     # x = torch.randn(1,3, 64, 64)
     # y = net(x)
     # print(y.size())
-
     # start_train()
 
     net = TestResnet(3, 10)
     x = torch.randn(1, 3, 32, 32)
     y = net(x)
     print(y.size())
+    # summary(net, (3, 32, 32))
