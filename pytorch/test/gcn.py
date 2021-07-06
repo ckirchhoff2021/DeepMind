@@ -29,7 +29,9 @@ class GCN(nn.Module):
         for i in range(1, count):
             ch1 = layers[i-1]
             ch2 = layers[i]
-            conv_list.append(GraphConv(self.adj, ch1, ch2))
+            conv = GraphConv(self.adj, ch1, ch2)
+            conv_list.append(conv)
+            self.add_module('Graph-Conv{}'.format(i), conv)
         return nn.Sequential(*conv_list)
 
     def forward(self, x):
@@ -53,6 +55,16 @@ def main():
     net2 = GCN(layers, A)
     y2 = net2(x)
     print(y2.size())
+
+    f = None
+    for (name, module) in net2.named_modules():
+        print(name ,module)
+        if name == 'Graph-Conv1':
+            f = module
+
+    y = f(x)
+    print(y.size())
+
 
 
 

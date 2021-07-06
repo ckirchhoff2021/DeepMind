@@ -167,7 +167,8 @@ def start_train():
             scalar_summary.add_scalar('accuracy', correct / len(data), index + epoch * len(train_loader))
 
             if index % 100 == 0:
-                print('==> training: epoch [%d]/[%d]-[%d]/[%d], loss = %f, acc = %f' % (epoch, epochs, index, n_batch, loss.item(), correct/len(data)))
+                print('==> training: epoch [%d]/[%d]-[%d]/[%d], loss = %f, acc = %f' %
+                      (epoch, epochs, index, n_batch, loss.item(), correct/len(data)))
 
             opt.zero_grad()
             loss.backward()
