@@ -5,3 +5,5 @@ __pycache__/
 .idea
 output/
 .DS_Store
+test/summary
+test/output
