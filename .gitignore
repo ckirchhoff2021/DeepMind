@@ -7,3 +7,4 @@ output/
 .DS_Store
 test/summary
 test/output
+*.pkl

@@ -26,7 +26,6 @@ PRETRAINED_VOCAB_ARCHIVE_MAP = {
 
 
 
-
 class BertNN(nn.Module):
     def __init__(self, classes=10):
         super(BertNN, self).__init__()
@@ -46,21 +45,21 @@ def main():
     tokenizer = BertTokenizer.from_pretrained(bert_path)
 
     print('bert testing...')
-    encode_dict = tokenizer.encode_plus('有一天', '你变成了猪')
+    # encode_dict = tokenizer.encode_plus(*['有一天', '你变成了猪', '哈哈哈'])
+    encode_dict = tokenizer.encode('有一天')
     print(encode_dict)
-    print(tokenizer.convert_ids_to_tokens(encode_dict['input_ids']))
+    print(tokenizer.convert_ids_to_tokens(encode_dict))
 
-    token_tensor = torch.tensor([encode_dict['input_ids']])
-    seg_tensor = torch.tensor(encode_dict['token_type_ids'])
+    token_tensor = torch.tensor([encode_dict])
     print(token_tensor.size())
-    print(seg_tensor.size())
+
 
     config = BertConfig.from_pretrained(bert_path)
     config.output_hidden_states = True
     config.output_attentions = True
     model = BertModel.from_pretrained(bert_path, config=config)
 
-    outputs = model(token_tensor, token_type_ids=seg_tensor)
+    outputs = model(token_tensor)
     print(outputs[0].shape)
     print(outputs[1].shape)
     print(outputs[2][0].shape)
@@ -212,8 +211,8 @@ def test4():
 
 
 if __name__ == '__main__':
-    # main()
-    test()
+    main()
+    # test()
     # test2()
     # test3()
     # test4()
