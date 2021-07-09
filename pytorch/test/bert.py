@@ -1,5 +1,5 @@
 import os
-
+import json
 import torch
 import torch.nn as nn
 import numpy as np
@@ -210,9 +210,51 @@ def test4():
     print(answer)  # 一 个 杀 手
 
 
+
+def test5():
+    root = '/Users/chenxiang/Downloads/bert/base/'
+    tokenizer = BertTokenizer.from_pretrained(root)
+    config = BertConfig.from_pretrained(root)
+    config.output_hidden_states = True
+    config.output_attentions = True
+    model = BertModel.from_pretrained(root, config=config)
+    model.eval()
+
+    flickr_file = '../mm/flickr30_annotations.json'
+    flickr_dict = json.load(open(flickr_file, 'r'))
+    tokens = flickr_dict['1001773457.jpg']
+    print(tokens)
+
+    tensor_list = list()
+    for i in range(5):
+        encoder = tokenizer.encode(tokens[i])
+        token_tensor = torch.tensor([encoder])
+        outputs = model(token_tensor)
+        tensor_list.append(outputs[1])
+
+    A = tensor_list[0]
+    B = tensor_list[3].t()
+    A = A / torch.norm(A, dim=1)
+    B = B / torch.norm(B, dim=0)
+
+    score = torch.mm(A, B)
+    print('Similar:', score)
+
+    token = 'Today is Friday'
+    encoder = tokenizer.encode(token)
+    print(encoder)
+    x = torch.tensor([encoder])
+    y = model(x)
+    C = y[1].t() / torch.norm(y[1].t(), dim=0)
+    score = torch.mm(A, C)
+    print('Random: ', score)
+
+
+
+
 if __name__ == '__main__':
-    main()
+    # main()
     # test()
     # test2()
     # test3()
-    # test4()
+    test5()

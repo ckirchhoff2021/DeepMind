@@ -27,6 +27,7 @@ def main():
 
 
 def text_embedding():
+    vocab_dict = dict()
     root = '/Users/chenxiang/Downloads/bert/chinese/'
     tokenizer = BertTokenizer.from_pretrained(root)
     config = BertConfig.from_pretrained(root)
@@ -40,7 +41,7 @@ def text_embedding():
 
     crop_length = 256
     half_length = 128
-    for key in text_datas:
+    for key in tqdm(text_datas):
         video_id = key
         text = text_datas[key]
         count = len(text)
@@ -62,8 +63,12 @@ def text_embedding():
             vec += embeddings
 
         vec /= len(text_list)
-        print(vec)
-        break
+        vocab_dict[video_id] = vec.data.numpy().tolist()
+
+    with open('vocab.json', 'w') as f:
+        json.dump(vocab_dict, f, 'ensure_ascii=False')
+
+    print('Done...')
 
 
 
