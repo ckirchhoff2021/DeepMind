@@ -43,27 +43,35 @@ class BertNN(nn.Module):
 def main():
     bert_path = '/Users/chenxiang/Downloads/bert/chinese'
     tokenizer = BertTokenizer.from_pretrained(bert_path)
-
-    print('bert testing...')
-    # encode_dict = tokenizer.encode_plus(*['有一天', '你变成了猪', '哈哈哈'])
-    encode_dict = tokenizer.encode('有一天')
-    print(encode_dict)
-    print(tokenizer.convert_ids_to_tokens(encode_dict))
-
-    token_tensor = torch.tensor([encode_dict])
-    print(token_tensor.size())
-
-
     config = BertConfig.from_pretrained(bert_path)
     config.output_hidden_states = True
     config.output_attentions = True
     model = BertModel.from_pretrained(bert_path, config=config)
+    model.eval()
 
-    outputs = model(token_tensor)
-    print(outputs[0].shape)
-    print(outputs[1].shape)
-    print(outputs[2][0].shape)
-    print(outputs[3][0].shape)
+    print('bert testing...')
+    i1 = '我早上吃了饼'
+    i2 = '本拉登是坏人'
+
+    e1 = tokenizer.encode(i1)
+    e2 = tokenizer.encode(i2)
+
+    t1 = torch.tensor([e1])
+    t2 = torch.tensor([e2])
+
+    y1 = model(t1)
+    y2 = model(t2)
+
+    y1 = y1[1]
+    y2 = y2[1]
+
+    y1 = y1 / y1.norm(dim=1)
+    y2 = y2 / y2.norm(dim=1)
+
+    score = torch.mm(y1, y2.t())
+    print(score)
+
+
 
 
 '''
@@ -81,7 +89,11 @@ def test():
     config.output_attentions = True
     model = BertModel.from_pretrained(root, config=config)
 
-    print(tokenizer.encode('陛下驾到'))
+    tokens = tokenizer.tokenize('陛下驾到,哈哈哈')
+    ids = tokenizer.convert_tokens_to_ids(['[CLS]'] + tokens + ['[SEP]'])
+    print(ids)
+    print(tokenizer.encode('陛下驾到,哈哈哈'))
+    print(tokenizer.convert_ids_to_tokens(tokenizer.encode('陛下驾到,哈哈哈')))
     sen_code = tokenizer.encode_plus('这个故事没有终点', '正如星空没有彼岸')
     print(sen_code)
     print(tokenizer.convert_ids_to_tokens(sen_code['input_ids']))
@@ -240,7 +252,7 @@ def test5():
     score = torch.mm(A, B)
     print('Similar:', score)
 
-    token = 'Today is Friday'
+    token = 'you are an idiot .'
     encoder = tokenizer.encode(token)
     print(encoder)
     x = torch.tensor([encoder])
@@ -254,7 +266,7 @@ def test5():
 
 if __name__ == '__main__':
     # main()
-    # test()
+    test()
     # test2()
     # test3()
-    test5()
+    # test5()
