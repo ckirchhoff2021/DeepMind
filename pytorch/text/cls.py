@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from config import *
 from thnews import *
-from transformers import BertModel
+from transformers import BertModel, AdamW
 
 
 class CLSModel(nn.Module):

@@ -9,3 +9,4 @@ test/summary
 test/output
 *.pkl
 *datas/
+kg.py

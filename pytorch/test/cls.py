@@ -204,6 +204,8 @@ def start_train():
             torch.save(state, '../output/cls.pth')
 
 
+def update(a):
+    a['x'] += 1
 
 
 if __name__ == '__main__':
@@ -213,8 +215,25 @@ if __name__ == '__main__':
     # print(y.size())
     # start_train()
 
-    net = TestResnet(3, 10)
-    x = torch.randn(1, 3, 32, 32)
-    y = net(x)
-    print(y.size())
+    # net = TestResnet(3, 10)
+    # x = torch.randn(1, 3, 32, 32)
+    # y = net(x)
+    # print(y.size())
     # summary(net, (3, 32, 32))
+
+    net = models.resnet50(pretrained=True)
+    layers = list(net.children())
+    feature = nn.Sequential(*layers[:-1])
+    x = torch.randn(1,3,224,224)
+    y = feature(x)
+    print(y.size())
+
+    pt = 1.0 /3
+    print('{:.3f}'.format(pt))
+    print("%.3f"% pt)
+
+    a = {'x': 12, 'y': 13}
+    update(a)
+    update(a)
+    update(a)
+    print(a)
