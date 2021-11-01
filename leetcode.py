@@ -655,35 +655,13 @@ class Solution:
 
 
     def qsort_recursive(self, nums, left, right):
-        if right - left == 0:
+        if left >= right:
             return
 
-        if right - left == 1:
-            if nums[left] > nums[right]   :
-                tmp = nums[left]
-                nums[left] = nums[right]
-                nums[right] = tmp
-
-        pass
-
-
-
-    def qsort(self, nums, left, right):
-        if len(nums) == 1:
-            return nums
-
-        if len(nums) == 2:
-            a, b = nums
-            if a < b:
-                return [a, b]
-            else:
-                return [b, a]
-
-        k = nums[0]
-        i = 0
-        j = len(nums) - 1
+        i = left
+        j = right
         while i < j:
-            while nums[j] >= k and j > i:
+            while nums[j] >= nums[i] and j > i:
                 j = j - 1
 
             if j > i:
@@ -691,7 +669,7 @@ class Solution:
                 nums[j] = nums[i]
                 nums[i] = tmp
 
-            while nums[i] <= k and i < j:
+            while nums[i] <= nums[j] and i < j:
                 i = i + 1
 
             if i < j:
@@ -699,13 +677,85 @@ class Solution:
                 nums[i] = nums[j]
                 nums[j] = tmp
 
-        mid = i
-        qsort(nums)
+        self.qsort_recursive(nums, left, i-1)
+        self.qsort_recursive(nums, i+1, right)
 
+
+    def qsort(self, nums):
+        self.qsort_recursive(nums, 0, len(nums) - 1)
         return nums
 
+    def numTrees(self, n):
+        if n == 1:
+            return 1
+        if n == 2:
+            return 2
+
+        dp = [0] * (n + 1)
+        dp[0] = 1
+        dp[1] = 1
+        dp[2] = 2
+
+        for i in range(3, n+1):
+            for k in range(i):
+                left = k
+                right = i - 1 - k
+                dp[i] += dp[left] * dp[right]
+
+        return dp[n]
 
 
+    def add(self, root, k):
+        if root:
+            root.val += k
+            self.add(root.left, k)
+            self.add(root.right, k)
+
+
+    def generateTrees(self, n):
+        n1 = TreeNode(1)
+        if n == 1:
+            return [n1]
+
+        n2 = TreeNode(2, left=TreeNode(1))
+        n3 = TreeNode(1, right=TreeNode(2))
+        if n == 2:
+            return [n2, n3]
+
+        dp = list()
+        dp.append([])
+        dp.append([n1])
+        dp.append([n2, n3])
+
+        for i in range(3, n+1):
+            di = list()
+            for k in range(i):
+                lefts = copy.deepcopy(dp[k])
+                rights = copy.deepcopy(dp[i-1-k])
+                for index, node in enumerate(rights):
+                    self.add(node, k+1)
+
+                if len(lefts) == 0:
+                    for r in rights:
+                        nk = TreeNode(k+1)
+                        nk.right = copy.deepcopy(r)
+                        di.append(nk)
+
+                if len(rights) == 0:
+                    for l in lefts:
+                        nk = TreeNode(k+1)
+                        nk.left = copy.deepcopy(l)
+                        di.append(nk)
+
+                for l in lefts:
+                    for r in rights:
+                        nk = TreeNode(k+1)
+                        nk.left = copy.deepcopy(l)
+                        nk.right = copy.deepcopy(r)
+                        di.append(nk)
+
+            dp.append(di)
+        return dp[-1]
 
 
 def merged_sorted(a1, a2):
@@ -874,8 +924,17 @@ def main():
 
     print('-- qsort --')
     # w = solution.minWindow("XDOYEZODEYXNZ","XYZ")
-    w = solution.qsort([5,7,2,4,7,8,1])
+    w = solution.qsort([5,7,2,4,7,8,1,9,12,19,2,1,3,8])
     print(w)
+
+
+    print('-- numTrees --')
+    num = solution.numTrees(9)
+    print(num)
+
+    print('-- generateTrees --')
+    ret = solution.generateTrees(5)
+    print(ret)
 
 
 def debug():
@@ -885,6 +944,16 @@ def debug():
     sample = [k1, k2]
 
     print(k3 in sample)
+
+
+    n1 = TreeNode(2, left=TreeNode(1, left=TreeNode(5)), right=TreeNode(2))
+    n2 = copy.deepcopy(n1)
+    n1.left.left.val = 10
+
+    print(n2.left.left.val)
+    print(n1.left.left.val)
+
+
 
 if __name__ == '__main__':
     main()

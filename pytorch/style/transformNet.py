@@ -64,7 +64,7 @@ class TransformNet(nn.Module):
 
 def main():
     net = TransformNet()
-    x = torch.randn(1,3,256, 256)
+    x = torch.randn(1,3, 256, 256)
     y = net(x)
     print(y.size())
 
