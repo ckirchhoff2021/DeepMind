@@ -168,12 +168,16 @@ def start_train():
     batches = int(len(style_datas) / 4)
 
     net = AdaINNet()
-    net.train()
+    net.cuda()
+
     opt = optimizer.Adam(net.parameters(), lr=5e-5)
     epochs = 100
+    net.train()
+
     for epoch in range(epochs):
         losses = 0.0
-        for index, (content, style) in enumerate(data_loader):
+        for index, (inputs, targets) in enumerate(data_loader):
+            content, style = inputs.cuda(), targets.cuda()
             loss = net(content, style)
             opt.zero_grad()
             loss.backward()
@@ -214,10 +218,10 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    # start_train()
+    start_train()
     # net = models.vgg19()
     # print(net.features)
-    test()
+    # test()
 
 
 
