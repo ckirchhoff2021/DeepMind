@@ -1,4 +1,5 @@
 import copy
+import math
 
 
 class ListNode:
@@ -64,27 +65,43 @@ class Solution:
         Do not return anything, modify nums in-place instead.
         """
         count = len(nums)
-        k1 = -1
-        k2 = -1
-        tag = False
-        for i in range(count-1, -1, -1):
-            a1 = nums[i]
-            for j in range(i-1, -1, -1):
-                a2 = nums[j]
-                if a1 > a2:
-                    print(i, j)
-                    k1 = i
-                    k2 = j
-                    tag = True
-                    break
-            if tag:
+        k = count - 1
+        while k > 0:
+            if nums[k-1] >= nums[k]:
+                k = k -1
+            else:
                 break
-        if not tag:
-            nums = list(reversed(nums))
+
+        if k == 0:
+            reverse = [nums[i] for i in range(count-1,-1,-1)]
+            for i in range(count):
+                nums[i] = reverse[i]
         else:
-            value = nums[k1]
-            nums[k1] = nums[k2]
-            nums[k2] = value
+            j = count - 1
+            while nums[j] <= nums[k-1] and j > k - 1:
+                j = j - 1
+
+            if nums[j] > nums[k-1] and j > k -1:
+                tmp = nums[k-1]
+                nums[k-1] = nums[j]
+                nums[j] = tmp
+
+                remains = sorted(nums[k:])
+                for s in range(k,count):
+                    nums[s] = remains[s-k]
+
+            '''
+            i = k
+            while nums[i] <= nums[-1] and i < count - 1:
+                i = i + 1
+
+            if nums[i] > nums[-1] and i < count - 1:
+                tmp = nums[-1]
+                nums[-1] = nums[i]
+                nums[i] = tmp   
+            '''
+
+
 
     def longestPalindrome(self, s):
         count = len(s)
@@ -546,6 +563,45 @@ class Solution:
             pNode = pNext
         return pReverseHead
 
+    def reverseBetween(self, head, left, right):
+        node = head
+        k = 1
+        front = None
+        pLeft = None
+        pRight = None
+        back = None
+        while node:
+            if k == left - 1:
+                front = node
+            if k == left:
+                pLeft = node
+            if k == right:
+                pRight = node
+            if k == right + 1:
+                back = node
+            node = node.next
+            k += 1
+
+        pPrev = None
+        pNode = pLeft
+        while pNode:
+            if pNode == back:
+                break
+            pNext = pNode.next
+            pNode.next = pPrev
+            pPrev = pNode
+            pNode = pNext
+
+        phead = head
+        if front:
+            front.next = pRight
+        else:
+            phead = pRight
+
+        if back:
+            pLeft.next = back
+        return phead
+
 
     def LRU(self, operators, k):
         # write code here
@@ -758,6 +814,119 @@ class Solution:
         return dp[-1]
 
 
+    def maxProfit2(self, prices):
+        num = len(prices)
+        if num <= 1:
+            return 0
+
+        dp = [0] * num
+        dp[1] = max(prices[1] - prices[0], 0)
+
+        for i in range(2, num):
+            pi = prices[i]
+            for j in range(i):
+                pj = prices[j]
+                value = pi - pj
+                last = 0
+                if j > 0:
+                    last = max(dp[:j])
+                if last + value > dp[i]:
+                    dp[i] = last + value
+        return max(dp)
+
+
+    def isSubsequence(self, s: str, t: str):
+        if s == '':
+            return True
+
+        nt = len(t)
+        k = 0
+        for i in range(nt):
+            if t[i] == s[k]:
+                k = k + 1
+            if k == len(s):
+                return True
+
+        return False
+
+    def sqrt_taylor(self, x, seed):
+        def n_deravative(n, x0):
+            heads = 0.5 - n
+            s0 = 0.5
+            for i in range(1, n):
+                s0 *= (1 - 2 * i) / 2.0
+            s1 = s0 * math.pow(x0, heads)
+            return s1
+
+        N = 30
+        f = math.sqrt(seed)
+        level = 1.0
+        for i in range(1, N):
+            level = level * i
+            der = n_deravative(i, seed)
+            dx = (x - seed) ** i
+            f += der * dx / level
+        return f
+
+
+    def divide(self, dividend, divisor):
+        sign = 1
+        if divisor * dividend < 0:
+            sign = -1
+
+        f1 = dividend if dividend > 0 else -dividend
+        f2 = divisor if divisor > 0 else -divisor
+
+        if f2 == 1:
+            return f1 * sign
+
+        if f1 == f2:
+            return sign
+
+        if f1 < f2:
+            return 0
+
+        v1 = f1 // 2 + 1
+        high = v1
+        low = 1
+        while low < high:
+            mid = (low + high) // 2
+            if mid * f2 == f1 or (mid * f2 < f1 and (mid + 1) * f2 > f1):
+                return mid * sign
+
+            if (mid + 1) * f2 == f1:
+                return (mid + 1) *sign
+
+            if (mid - 1) * f2 == f1 or (mid * f2 > f1 and (mid - 1) * f2 < f1):
+                return (mid - 1) * sign
+
+            if mid * f2 < f1:
+               low = mid
+
+            if mid * f2 > f1:
+                high = mid
+
+        return 1
+
+
+    def combinationSum2(self, candidates, target):
+        values = sorted(candidates)
+        count = len(values)
+
+        solutions = list()
+        def dfs(pos, key, path):
+            if key == 0:
+                return True
+
+            cur = values[key]
+            remain = key - cur
+            path.append(cur)
+
+            for i in range(pos + 1, count):
+                if dfs(i, remain, path):
+                    solutions.append(path)
+
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0
@@ -803,11 +972,6 @@ def main():
     nums = [-1,0,1,2,-1,4]
     arr = solution.threeSum(nums)
     print(arr)
-
-    print("-- nextPermutation --")
-    nums = [3,2,1]
-    solution.nextPermutation(nums)
-    print(nums)
 
     print('-- longestPalindrome -- ')
     str_data = 'abcbad'
@@ -936,6 +1100,33 @@ def main():
     ret = solution.generateTrees(5)
     print(ret)
 
+    print('-- maxProfit -- ')
+    prices = [7,1,5,3,6,4]
+    ret = solution.maxProfit2(prices)
+    print(ret)
+
+    print('-- sqrt taylor -- ')
+    ret = solution.sqrt_taylor(2, 1.44)
+    print(ret)
+
+
+    print('-- divide --')
+    ret = solution.divide(13, 3)
+    print(ret)
+
+    print('-- reverseBetween --')
+    k1 = ListNode(5, next=ListNode(2, next=ListNode(3, next=ListNode(9, next=ListNode(8)))))
+    k1= solution.reverseBetween(k1, 1,4)
+    while k1:
+        print(k1.val)
+        k1 = k1.next
+
+
+    print("-- nextPermutation --")
+    nums = [5,4,7,5,3,2]
+    solution.nextPermutation(nums)
+    print(nums)
+
 
 def debug():
     k1 = ListNode(5)
@@ -944,7 +1135,6 @@ def debug():
     sample = [k1, k2]
 
     print(k3 in sample)
-
 
     n1 = TreeNode(2, left=TreeNode(1, left=TreeNode(5)), right=TreeNode(2))
     n2 = copy.deepcopy(n1)

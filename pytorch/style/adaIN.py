@@ -137,6 +137,15 @@ class AdaINNet(nn.Module):
         images.paste(out_image, (512,0,768,256))
         return images
 
+    def build(self, content_tensor, style_tensor, alpha=1.0):
+        content_features = self.encode(content_tensor)
+        style_features = self.encode(style_tensor)
+        f1 = adaIN_transform(content_features[3], style_features[3])
+        f2 = alpha * f1 + (1.0 - alpha) * content_features[3]
+        output = self.decode(f2)
+        out = recover_tensor(output)
+        return out
+
     def forward(self, content_tensor, style_tensor, alpha=1.0):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
@@ -152,9 +161,12 @@ class AdaINNet(nn.Module):
         return loss
 
 
-def recover_tensor(image_tensor):
+def recover_tensor(image_tensor, cuda=True):
     mean = torch.tensor([0.485, 0.456, 0.406]).view(1,3,1,1)
     std = torch.tensor([0.229, 0.224, 0.225]).view(1,3,1,1)
+    if cuda:
+        mean = mean.cuda()
+        std = std.cuda()
     out = image_tensor * std + mean
     out = out.clamp(0, 1)
     return out
@@ -173,19 +185,20 @@ def start_train():
     opt = optimizer.Adam(net.parameters(), lr=5e-5)
     epochs = 100
     net.train()
+    alpha = 0.1
 
     for epoch in range(epochs):
         losses = 0.0
         for index, (inputs, targets) in enumerate(data_loader):
             content, style = inputs.cuda(), targets.cuda()
-            loss = net(content, style)
+            loss = net(content, style, alpha)
             opt.zero_grad()
             loss.backward()
             opt.step()
             losses += loss.item()
             print('==> Epoch: [%d]/[%d]-[%d]/[%d], batch loss = %f' % (epoch, epochs, index, batches, loss.item()))
             if index % 10 == 0:
-                out = net.generate(content, style)
+                out = net.build(content, style, alpha)
                 out = recover_tensor(out)
                 save_image(out, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=2)
 
