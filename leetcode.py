@@ -913,18 +913,27 @@ class Solution:
         values = sorted(candidates)
         count = len(values)
 
-        solutions = list()
-        def dfs(pos, key, path):
-            if key == 0:
+        solutions = set()
+        def dfs(pos, score, path):
+            if score == 0:
+                solutions.add(tuple(path[:]))
                 return True
 
-            cur = values[key]
-            remain = key - cur
-            path.append(cur)
+            if len(path) > 0 and path[-1] > score:
+                return False
 
-            for i in range(pos + 1, count):
-                if dfs(i, remain, path):
-                    solutions.append(path)
+            visited = set()
+            for i in range(pos, count):
+                if values[i] in visited:
+                    continue
+                visited.add(values[i])
+                path.append(values[i])
+                index = len(path) - 1
+                dfs(i+1, target-sum(path), path)
+                path.pop(index)
+
+        dfs(0, target, [])
+        return list(solutions)
 
 
 def merged_sorted(a1, a2):
@@ -1126,6 +1135,15 @@ def main():
     nums = [5,4,7,5,3,2]
     solution.nextPermutation(nums)
     print(nums)
+
+
+    print('-- combinationSum2 --')
+    candidates = [14,6,25,9,30,20,33,34,28,30,16,12,31,9,9,12,34,16,25,32,8,7,30,12,33,20,21,
+                  29,24,17,27,34,11,17,30,6,32,21,27,17,16,8,24,12,12,28,11,33,10,32,22,13,34,18,12]
+    target = 27
+    ret = solution.combinationSum2(candidates, target)
+    print(ret)
+
 
 
 def debug():
