@@ -936,6 +936,69 @@ class Solution:
         return list(solutions)
 
 
+    def removeElements(self, head, val):
+        node = head
+        prev = None
+        ret = head
+        while node:
+            pnext = node.next
+            if node.val == val:
+                if prev:
+                    prev.next = pnext
+                else:
+                    ret = pnext
+            else:
+                prev = node
+            node = pnext
+        return ret
+
+
+    def isValidBST(self, root):
+        if root is None:
+            return True
+
+        left = root.left
+        right = root.right
+
+        if left:
+            pleft = left
+            while pleft:
+                max_left = pleft.val
+                pleft = pleft.right
+
+            if max_left >= root.val:
+                return False
+
+        if right:
+            pright = right
+            while pright:
+                min_right = pright.val
+                pright = pright.left
+            if min_right <= root.val:
+                return False
+
+        bleft = self.isValidBST(left)
+        bright = self.isValidBST(right)
+        return bleft and bright
+
+
+    def recoverTree(self, root):
+        def visited(root, values, nodes):
+            if root is None:
+                return
+
+            visited(root.left, values, nodes)
+            values.append(root.val)
+            nodes.append(root)
+            visited(root.right, values, nodes)
+        vals = []
+        nodes = []
+        visited(root, vals, nodes)
+        vals.sort()
+        for index, p in enumerate(nodes):
+            p.val = vals[index]
+
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0
@@ -1144,6 +1207,16 @@ def main():
     ret = solution.combinationSum2(candidates, target)
     print(ret)
 
+    print('-- removeElements --')
+    k1 = ListNode(5, next=ListNode(5, next=ListNode(5, next=ListNode(9, next=ListNode(8)))))
+    ret = solution.removeElements(k1, 5)
+    print(ret)
+
+
+    print('-- recover tree --')
+    k1 = TreeNode(3, left=TreeNode(1), right=TreeNode(5, left=TreeNode(4)))
+    ret = solution.recoverTree(k1)
+    print(ret)
 
 
 def debug():
