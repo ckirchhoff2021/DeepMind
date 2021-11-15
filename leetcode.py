@@ -999,6 +999,28 @@ class Solution:
             p.val = vals[index]
 
 
+    def wordBreak_recursive(self, s, words):
+        count = len(words)
+        ret = list()
+
+        def run(s1, words, sentences):
+            if len(s1) == 0:
+                ret.append(' '.join(sentences[:]))
+                return
+
+            for i in range(count):
+                w = words[i]
+                if not s1.startswith(w):
+                    continue
+                sentences.append(w)
+                s2 = s1[len(w):]
+                run(s2, words, sentences)
+                sentences.pop()
+
+        run(s, words, [])
+        return ret
+
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0
@@ -1216,6 +1238,13 @@ def main():
     print('-- recover tree --')
     k1 = TreeNode(3, left=TreeNode(1), right=TreeNode(5, left=TreeNode(4)))
     ret = solution.recoverTree(k1)
+    print(ret)
+
+
+    print('-- word break --')
+    s = "aaaaaaa"
+    words = ["aaaa","aa","a"]
+    ret = solution.wordBreak_recursive(s, words)
     print(ret)
 
 
