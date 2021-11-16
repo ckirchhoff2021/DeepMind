@@ -1021,6 +1021,28 @@ class Solution:
         return ret
 
 
+    def hasCycle(self, head):
+        nodes = list()
+        p = head
+        while p:
+            if p in nodes:
+                return True
+            nodes.append(p)
+            p = p.next
+        return False
+
+    def detectCycle(self, head):
+        nodes = list()
+        p = head
+        while p:
+            if p in nodes:
+                return p
+            nodes.append(p)
+            p = p.next
+        return None
+
+
+
 def merged_sorted(a1, a2):
     i1 = 0
     i2 = 0

@@ -10,6 +10,7 @@ from torchvision.utils import save_image
 from torch.utils.data import DataLoader
 
 from datas import *
+from torch.utils.tensorboard import SummaryWriter
 
 
 class VGGEncoder(nn.Module):
@@ -99,10 +100,13 @@ class Decoder(nn.Module):
 
 
 class AdaINNet(nn.Module):
-    def __init__(self):
+    def __init__(self, alpha=1.0, w_content=1.0, w_style=0.01):
         super(AdaINNet, self).__init__()
         self.encode = VGGEncoder()
         self.decode = Decoder()
+        self.alpha = alpha
+        self.w_content = w_content
+        self.w_style = w_style
 
     @staticmethod
     def compute_content_loss(out_feature, content_feature):
@@ -118,7 +122,7 @@ class AdaINNet(nn.Module):
             loss += F.mse_loss(c_mean, s_mean) + F.mse_loss(c_std, s_std)
         return loss
 
-    def generate(self, content_file, style_file, alpha=1.0):
+    def generate(self, content_file, style_file):
         content_image = Image.open(content_file).resize((256,256))
         content_tensor = image_transform(content_image).unsqueeze(0)
         style_image = Image.open(style_file).resize((256,256))
@@ -126,9 +130,9 @@ class AdaINNet(nn.Module):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
         f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = alpha * f1 + (1.0 - alpha) * content_features[3]
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
         out = self.decode(f2)
-        out_image = recover_tensor(out)
+        out_image = recover_tensor(out, cuda=False)
         recover_func = transforms.ToPILImage()
         out_image = recover_func(out_image[0])
         images = Image.new('RGB', (768, 256))
@@ -137,27 +141,27 @@ class AdaINNet(nn.Module):
         images.paste(out_image, (512,0,768,256))
         return images
 
-    def build(self, content_tensor, style_tensor, alpha=1.0):
+    def build(self, content_tensor, style_tensor):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
         f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = alpha * f1 + (1.0 - alpha) * content_features[3]
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
         output = self.decode(f2)
         out = recover_tensor(output)
         return out
 
-    def forward(self, content_tensor, style_tensor, alpha=1.0):
+    def forward(self, content_tensor, style_tensor):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
         f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = alpha * f1 + (1.0 - alpha) * content_features[3]
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
 
         output = self.decode(f2)
         output_features = self.encode(output)
         style_features = self.encode(style_tensor)
         style_loss = self.compute_style_loss(output_features, style_features)
         content_loss = self.compute_content_loss(output_features[3], f2)
-        loss = content_loss + style_loss * 10.0
+        loss = content_loss * self.w_content + style_loss * self.w_style
         return loss
 
 
@@ -177,42 +181,49 @@ def start_train():
     style_datas = StyleDataset()
     print('==> datas: ', len(style_datas))
     data_loader = DataLoader(style_datas, batch_size=4, shuffle=True)
-    batches = int(len(style_datas) / 4)
+    batches = int(len(style_datas) / 4) + 1
 
-    net = AdaINNet()
+    net = AdaINNet(alpha=0.95, w_content=1.0, w_style=0.01)
     net.cuda()
 
     opt = optimizer.Adam(net.parameters(), lr=5e-5)
-    epochs = 100
+    epochs = 200
     net.train()
-    alpha = 0.1
 
+    summary = SummaryWriter('out')
     for epoch in range(epochs):
         losses = 0.0
         for index, (inputs, targets) in enumerate(data_loader):
             content, style = inputs.cuda(), targets.cuda()
-            loss = net(content, style, alpha)
+            loss = net(content, style)
             opt.zero_grad()
             loss.backward()
             opt.step()
             losses += loss.item()
+            summary.add_scalar('train/batch_loss', loss.item())
+
             print('==> Epoch: [%d]/[%d]-[%d]/[%d], batch loss = %f' % (epoch, epochs, index, batches, loss.item()))
             if index % 10 == 0:
-                out = net.build(content, style, alpha)
+                out = net.build(content, style)
                 out = recover_tensor(out)
                 save_image(out, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=2)
 
         train_loss = losses / len(data_loader)
+        summary.add_scalar('train/epoch_loss', train_loss)
+
         print('==> Epoch: [%d]/[%d], train loss = %f' % (epoch, epochs, train_loss) )
-        torch.save(net, 'out/style-net.pth')
+        torch.save(net.state_dict(), 'out/style-net.pth')
 
 
 def test():
-    net = AdaINNet()
-    state = torch.load('out/style-net.pth', map_location='cpu')
-    net.load_state_dict(state)
+    # net = AdaINNet()
+    # state = torch.load('res/style-net.pth', map_location='cpu')
+    # net.load_state_dict(state)
+    net = torch.load('output/out/style-net.pth', map_location='cpu')
     net.eval()
-    out = net.generate('res/content/lenna.jpg', 'res/style/sky.jpg')
+    content = 'pytorch/style/res/content/lenna.jpg'
+    style = 'pytorch/style/res/style/sky.jpg'
+    out = net.generate(content, style)
     out.show()
 
 
