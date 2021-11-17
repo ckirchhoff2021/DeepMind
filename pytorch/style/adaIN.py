@@ -69,12 +69,24 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
         self.conv1 = nn.Sequential(
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True)
+        )
+
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 512, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
             nn.Conv2d(512, 256, 3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(256, 256, 3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
+
+        self.conv3 = nn.Sequential(
             nn.Conv2d(256, 256, 3, stride=1, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 256, 3, stride=1, padding=1),
@@ -82,31 +94,36 @@ class Decoder(nn.Module):
             nn.Conv2d(256, 128, 3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
-        self.conv3 = nn.Sequential(
+
+        self.conv4 = nn.Sequential(
             nn.Conv2d(128, 128, 3, stride=1, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 64, 3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
-        self.conv4 = nn.Sequential(
+
+        self.conv5 = nn.Sequential(
             nn.Conv2d(64, 64, 3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 3, 3, stride=1, padding=1)
+            nn.Conv2d(64, 64, 3, stride=1, padding=1),
+            nn.ReLU(inplace=True)
         )
+
         self.up_sample = nn.Upsample(mode='nearest', scale_factor=2)
 
     def forward(self, x):
         y = self.up_sample(self.conv1(x))
         y = self.up_sample(self.conv2(y))
         y = self.up_sample(self.conv3(y))
-        y = self.conv4(y)
+        y = self.up_sample(self.conv4(y))
+        y = self.conv5(y)
         return y
 
 
 class AdaINNet(nn.Module):
     def __init__(self, alpha=1.0, w_content=1.0, w_style=0.01):
         super(AdaINNet, self).__init__()
-        self.encode = VGGEncoder()
+        self.encode = VGGEncoder(required_grad=False)
         self.decode = Decoder()
         self.alpha = alpha
         self.w_content = w_content
@@ -157,14 +174,14 @@ class AdaINNet(nn.Module):
     def forward(self, content_tensor, style_tensor):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
-        f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
+        f1 = adaIN_transform(content_features[4], style_features[4])
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[4]
 
         output = self.decode(f2)
         output_features = self.encode(output)
         style_features = self.encode(style_tensor)
         style_loss = self.compute_style_loss(output_features, style_features)
-        content_loss = self.compute_content_loss(output_features[3], f2)
+        content_loss = self.compute_content_loss(output_features[4], f2)
         loss = content_loss * self.w_content + style_loss * self.w_style
         return loss
 
@@ -190,7 +207,7 @@ def start_train():
     net = AdaINNet(alpha=0.95, w_content=1.0, w_style=0.01)
     net.cuda()
 
-    opt = optimizer.Adam(net.parameters(), lr=5e-5)
+    opt = optimizer.Adam(net.parameters(), lr=1e-4)
     epochs = 200
     net.train()
 
