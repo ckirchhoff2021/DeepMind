@@ -153,8 +153,8 @@ class AdaINNet(nn.Module):
         style_tensor = image_transform(style_image).unsqueeze(0)
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
-        f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
+        f1 = adaIN_transform(content_features[4], style_features[4])
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[4]
         out = self.decode(f2)
         out_image = recover_tensor(out, cuda=False)
         recover_func = transforms.ToPILImage()
@@ -168,8 +168,8 @@ class AdaINNet(nn.Module):
     def build(self, content_tensor, style_tensor):
         content_features = self.encode(content_tensor)
         style_features = self.encode(style_tensor)
-        f1 = adaIN_transform(content_features[3], style_features[3])
-        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
+        f1 = adaIN_transform(content_features[4], style_features[4])
+        f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[4]
         output = self.decode(f2)
         out = recover_tensor(output, cuda=cuda)
         return out
@@ -206,6 +206,8 @@ def start_train():
     batches = int(len(style_datas) / 4) + 1
 
     net = AdaINNet(alpha=0.95, w_content=1.0, w_style=0.01)
+    state = torch.load('output/out/style-net.pth')
+    net.load_state_dict(state)
     if cuda: net.cuda()
 
     opt = optimizer.Adam(net.parameters(), lr=1e-4)
@@ -240,7 +242,7 @@ def start_train():
 
 
 def test():
-    net = AdaINNet(alpha=0.1, w_content=1.0, w_style=0.01)
+    net = AdaINNet(alpha=0.95, w_content=1.0, w_style=0.01)
     state = torch.load('output/out/style-net.pth', map_location='cpu')
     net.load_state_dict(state)
     # net = torch.load('output/out/style-net.pth', map_location='cpu')
@@ -263,10 +265,10 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    start_train()
+    # start_train()
     # net = models.vgg19()
     # print(net.features)
-    # test()
+    test()
 
 
 
