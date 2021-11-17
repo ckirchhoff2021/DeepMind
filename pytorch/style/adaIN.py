@@ -16,34 +16,38 @@ from torch.utils.tensorboard import SummaryWriter
 class VGGEncoder(nn.Module):
     def __init__(self, required_grad=False):
         super(VGGEncoder, self).__init__()
-        vgg_pretrained = models.vgg19(pretrained=True).features
+        vgg_pretrained = models.vgg16(pretrained=True).features
         vgg_pretrained = vgg_pretrained.eval()
 
         self.slice1 = nn.Sequential()
         self.slice2 = nn.Sequential()
         self.slice3 = nn.Sequential()
         self.slice4 = nn.Sequential()
+        self.slice5 = nn.Sequential()
 
-        for x in range(2):
+        for x in range(4):
             self.slice1.add_module(str(x), vgg_pretrained[x])
-        for x in range(2, 7):
+        for x in range(4, 9):
             self.slice2.add_module(str(x), vgg_pretrained[x])
-        for x in range(7, 12):
+        for x in range(9, 16):
             self.slice3.add_module(str(x), vgg_pretrained[x])
-        for x in range(12, 21):
+        for x in range(16, 23):
             self.slice4.add_module(str(x), vgg_pretrained[x])
+        for x in range(23, 30):
+            self.slice5.add_module(str(x), vgg_pretrained[x])
 
         if not required_grad:
-            for param in self.parameters():
-                param.requires_grad = False
+                for param in self.parameters():
+                    param.requires_grad = False
 
     def forward(self, x):
         h1 = self.slice1(x)
         h2 = self.slice2(h1)
         h3 = self.slice3(h2)
         h4 = self.slice4(h3)
-        vgg_features = namedtuple('vgg_features', ['h1', 'h2', 'h3', 'h4'])
-        features = vgg_features(h1, h2, h3, h4)
+        h5 = self.slice5(h4)
+        vgg_features = namedtuple('vgg_features', ['h1', 'h2', 'h3', 'h4', 'h5'])
+        features = vgg_features(h1, h2, h3, h4, h5)
         return features
 
 
@@ -216,10 +220,10 @@ def start_train():
 
 
 def test():
-    # net = AdaINNet()
-    # state = torch.load('res/style-net.pth', map_location='cpu')
-    # net.load_state_dict(state)
-    net = torch.load('output/out/style-net.pth', map_location='cpu')
+    net = AdaINNet(alpha=0.1, w_content=1.0, w_style=0.01)
+    state = torch.load('output/out/style-net.pth', map_location='cpu')
+    net.load_state_dict(state)
+    # net = torch.load('output/out/style-net.pth', map_location='cpu')
     net.eval()
     content = 'pytorch/style/res/content/lenna.jpg'
     style = 'pytorch/style/res/style/sky.jpg'
@@ -231,12 +235,13 @@ def test():
 def main():
     net = VGGEncoder()
     x = torch.randn(1,3,256,256)
-    h1, h2, h3, h4 = net(x)
-    print(h4.size())
+    h1, h2, h3, h4, h5 = net(x)
+    print(h4.size(), h5.size())
 
     decode = Decoder()
     y = decode(h4)
     print(y.size())
+
 
 
 

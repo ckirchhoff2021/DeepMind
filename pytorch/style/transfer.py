@@ -8,7 +8,7 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from torchvision import models, transforms, datasets
 
-from style.util import *
+from pytorch.style.util import *
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -79,12 +79,12 @@ def compute_style_loss(source, target):
 
 
 def run():
-    # content_file = '/Users/chenxiang/Desktop/images/dancing.jpg'
-    content_file = "/Users/chenxiang/Desktop/images/bro.jpg"
+    content_file = '/Users/chenxiang/Desktop/images/dancing.jpg'
+    # content_file = "/Users/chenxiang/Desktop/images/bro.jpg"
     style_file = '/Users/chenxiang/Desktop/images/picasso.jpg'
 
     content_transform = transforms.Compose([
-        transforms.CenterCrop((2736,2736)),
+        # transforms.CenterCrop((2736,2736)),
         transforms.Resize((256, 256)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
