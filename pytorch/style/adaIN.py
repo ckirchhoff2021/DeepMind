@@ -13,6 +13,9 @@ from datas import *
 from torch.utils.tensorboard import SummaryWriter
 
 
+cuda = torch.cuda.is_available()
+
+
 class VGGEncoder(nn.Module):
     def __init__(self, required_grad=False):
         super(VGGEncoder, self).__init__()
@@ -61,7 +64,7 @@ def compute_mean_std(features):
 def adaIN_transform(content_features, style_features):
     content_mean, content_std = compute_mean_std(content_features)
     style_mean, style_std = compute_mean_std(style_features)
-    norm = style_std * (content_features - content_mean) / content_std + style_mean
+    norm = style_std * (content_features - content_mean) / (content_std + 1e-5) + style_mean
     return norm
 
 
@@ -168,7 +171,7 @@ class AdaINNet(nn.Module):
         f1 = adaIN_transform(content_features[3], style_features[3])
         f2 = self.alpha * f1 + (1.0 - self.alpha) * content_features[3]
         output = self.decode(f2)
-        out = recover_tensor(output)
+        out = recover_tensor(output, cuda=cuda)
         return out
 
     def forward(self, content_tensor, style_tensor):
@@ -189,9 +192,7 @@ class AdaINNet(nn.Module):
 def recover_tensor(image_tensor, cuda=True):
     mean = torch.tensor([0.485, 0.456, 0.406]).view(1,3,1,1)
     std = torch.tensor([0.229, 0.224, 0.225]).view(1,3,1,1)
-    if cuda:
-        mean = mean.cuda()
-        std = std.cuda()
+    if cuda: mean, std = mean.cuda(), std.cuda()
     out = image_tensor * std + mean
     out = out.clamp(0, 1)
     return out
@@ -205,7 +206,7 @@ def start_train():
     batches = int(len(style_datas) / 4) + 1
 
     net = AdaINNet(alpha=0.95, w_content=1.0, w_style=0.01)
-    net.cuda()
+    if cuda: net.cuda()
 
     opt = optimizer.Adam(net.parameters(), lr=1e-4)
     epochs = 200
@@ -215,7 +216,9 @@ def start_train():
     for epoch in range(epochs):
         losses = 0.0
         for index, (inputs, targets) in enumerate(data_loader):
-            content, style = inputs.cuda(), targets.cuda()
+            content, style = inputs, targets
+            if cuda: content, style = inputs.cuda(), targets.cuda()
+
             loss = net(content, style)
             opt.zero_grad()
             loss.backward()
@@ -226,7 +229,7 @@ def start_train():
             print('==> Epoch: [%d]/[%d]-[%d]/[%d], batch loss = %f' % (epoch, epochs, index, batches, loss.item()))
             if index % 10 == 0:
                 out = net.build(content, style)
-                out = recover_tensor(out)
+                out = recover_tensor(out, cuda=cuda)
                 save_image(out, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=2)
 
         train_loss = losses / len(data_loader)
@@ -250,15 +253,11 @@ def test():
 
 
 def main():
-    net = VGGEncoder()
-    x = torch.randn(1,3,256,256)
-    h1, h2, h3, h4, h5 = net(x)
-    print(h4.size(), h5.size())
-
-    decode = Decoder()
-    y = decode(h5)
-    print(y.size())
-
+    net = AdaINNet()
+    c = torch.randn(1,3,256,256)
+    s = torch.randn(1,3,256,256)
+    y = net(c,s)
+    print(y)
 
 
 
