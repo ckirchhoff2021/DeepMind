@@ -105,7 +105,7 @@ class Decoder(nn.Module):
         self.conv5 = nn.Sequential(
             nn.Conv2d(64, 64, 3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, 3, stride=1, padding=1),
+            nn.Conv2d(64, 3, 3, stride=1, padding=1),
             nn.ReLU(inplace=True)
         )
 
@@ -256,7 +256,7 @@ def main():
     print(h4.size(), h5.size())
 
     decode = Decoder()
-    y = decode(h4)
+    y = decode(h5)
     print(y.size())
 
 
