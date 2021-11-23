@@ -200,7 +200,7 @@ def start_train():
             summary.add_scalar('train/batch_loss', loss.item())
 
             print('==> Epoch: [%d]/[%d]-[%d]/[%d], batch loss = %f' % (epoch, epochs, index, batches, loss.item()))
-            if index % 100 == 0:
+            if index % 1000 == 0:
                 content, style = next(test_iter)
                 if cuda: content, style = content.cuda(), style.cuda()
                 with torch.no_grad():
@@ -210,7 +210,7 @@ def start_train():
                 out = recover_tensor(out, cuda=cuda)
                 res = torch.cat([content, style, out], dim=0)
                 res = res.to('cpu')
-                save_image(out, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=batch_size)
+                save_image(res, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=batch_size)
 
         train_loss = losses / len(train_loader)
         summary.add_scalar('train/epoch_loss', train_loss)
