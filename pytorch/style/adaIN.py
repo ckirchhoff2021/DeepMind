@@ -64,7 +64,7 @@ def compute_mean_std(features):
 def adaIN_transform(content_features, style_features):
     content_mean, content_std = compute_mean_std(content_features)
     style_mean, style_std = compute_mean_std(style_features)
-    norm = style_std * (content_features - content_mean) / (content_std + 1e-5) + style_mean
+    norm = style_std * (content_features - content_mean) / (content_std + 1e-6) + style_mean
     return norm
 
 
@@ -112,7 +112,8 @@ class Decoder(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        self.up_sample = nn.Upsample(mode='nearest', scale_factor=2)
+        # self.up_sample = nn.Upsample(mode='nearest', scale_factor=2)
+        self.up_sample = nn.Upsample(mode='bilinear', scale_factor=2, align_corners=True)
 
     def forward(self, x):
         y = self.up_sample(self.conv1(x))
@@ -264,11 +265,11 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # start_train()
     # net = models.vgg19()
     # print(net.features)
-    test()
+    # test()
 
 
 

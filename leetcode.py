@@ -1041,6 +1041,74 @@ class Solution:
             p = p.next
         return None
 
+    def subsetsWithDup(self, nums):
+        values = sorted(nums)
+        ret = set()
+
+        def gen(arr, path):
+            count = len(arr)
+            ret.add(tuple(path))
+            for i in range(count):
+                path.append(arr[i])
+                gen(arr[i+1:], path)
+                path.pop()
+
+        path = []
+        gen(values, path)
+        ret = list(ret)
+        ret = [list(x) for x in ret]
+        return ret
+
+    def reorderList(self, head):
+        values = list()
+        nodes = list()
+        p1 = head
+        while p1:
+            values.append(p1.val)
+            nodes.append(p1)
+            p1 = p1.next
+
+        count = len(values)
+        for index, node in enumerate(nodes):
+            k = int(index / 2)
+            if index % 2 == 0:
+                node.val = values[k]
+            else:
+                node.val = values[count - 1 - k]
+
+
+    def fraction(self, v1, v2):
+        def gcd(a, b):
+            x = a
+            y = b
+            while x % y:
+                z = x % y
+                x = y
+                y = z
+            return y
+
+        k1 = v1
+        k2 = v2
+
+        ret = list()
+        while k2 != 1:
+            kk = gcd(k1, k2)
+            k1 = int(k1 / kk)
+            k2 = int(k2 / kk)
+            if k2 == 1:
+                ret.append(k1-1)
+                break
+
+            p = int(k1/k2)
+            r = k1 % k2
+            ret.append(p)
+            k1 = (k2 * p + r) * (p + 1)
+            k2 = k2 - r
+            if k2 == 1:
+                ret.append(k1-1)
+
+        return '+'.join(['{}/{}'.format(1,p+1) for p in ret])
+
 
 
 def merged_sorted(a1, a2):
@@ -1065,6 +1133,17 @@ def merged_sorted(a1, a2):
     return a3
 
 
+'''
+ns from a to c by b
+'''
+def hanoi(n, a, b, c):
+    if n == 1:
+        print('move %d from %s to %s' % (n, a, c))
+        return
+    else:
+        hanoi(n-1, a, c, b)
+        print('move %d from %s to %s' % (n, a, c))
+        hanoi(n-1, b, a, c)
 
 def main():
     solution = Solution()
@@ -1270,6 +1349,51 @@ def main():
     print(ret)
 
 
+    print('-- subsetsWithDup -- ')
+    nums = [1, 2, 2]
+    ret = solution.subsetsWithDup(nums)
+    print(ret)
+
+
+    print('-- fraction -- ')
+    ret = solution.fraction(34,33)
+    print(ret)
+
+def test():
+    def add(sm5, sm3, others):
+        if len(others) == 0:
+            if sm5 == sm3:
+                return True
+            else:
+                return False
+        else:
+            return add(sm5 + others[0], sm3, others[1:]) or add(sm5, sm3 + others[0], others[1:])
+
+    def main():
+        while True:
+            num = input()
+            values = input().split()
+            arr = [int(x) for x in values]
+
+            A = []
+            B = []
+            C = []
+
+            for val in arr:
+                if val % 5 == 0:
+                    A.append(val)
+                elif val % 3 == 0 and val % 5 != 0:
+                    B.append(val)
+                else:
+                    C.append(val)
+
+            sm5 = sum(A)
+            sm3 = sum(B)
+            print(add(sm5, sm3, C))
+
+    main()
+
+
 def debug():
     k1 = ListNode(5)
     k2 = ListNode(5)
@@ -1290,6 +1414,7 @@ def debug():
 if __name__ == '__main__':
     main()
     # debug()
-
+    # test()
+    # hanoi(10, 'A', 'B', 'C')
 
         

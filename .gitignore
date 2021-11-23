@@ -10,3 +10,5 @@ test/output
 *.pkl
 *datas/
 kg.py
+*content_resized/
+*style_resized/
