@@ -212,7 +212,7 @@ def start_train():
                 res = res.to('cpu')
                 save_image(out, 'out/' + str(epoch) +'-' + str(index) + '.png', nrow=batch_size)
 
-        train_loss = losses / len(data_loader)
+        train_loss = losses / len(train_loader)
         summary.add_scalar('train/epoch_loss', train_loss)
 
         print('==> Epoch: [%d]/[%d], train loss = %f' % (epoch, epochs, train_loss) )
