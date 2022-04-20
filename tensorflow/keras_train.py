@@ -53,7 +53,7 @@ def train(save_path, sess, batch_size, lr, epochs, train_data, test_data):
             total = 0
             for step, data in enumerate(tqdm(test_data), 1):
                 x, y = data
-                preds = sess.run([pred], feed_dict={inputs: x, labels:y})
+                preds = sess.run(pred, feed_dict={inputs: x, labels:y})
                 correct, cnt, _ = calculate_acc(preds, y)
                 corrects += correct
                 total += cnt
