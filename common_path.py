@@ -9,3 +9,5 @@ output_path = os.path.join(current_path, 'output')
 mnist_path = os.path.join(current_path, 'datas')
 
 data_path = os.path.join(current_path, 'datas')
+
+today = "20221207"
