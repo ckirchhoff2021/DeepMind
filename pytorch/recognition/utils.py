@@ -1,5 +1,6 @@
 import json
 import torch
+import numpy as np
 from PIL import Image
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -32,8 +33,9 @@ common_transform = transforms.Compose([
 
 def mnist_dataset():
     print('--- mnist dataset -- ')
-    train_datas = datasets.MNIST('../../datas', train=True, transform=mnist_transform)
-    test_datas = datasets.MNIST('../../datas', train=False, transform=mnist_transform)
+    folder = '../../../datas'
+    train_datas = datasets.MNIST(folder, train=True, transform=mnist_transform)
+    test_datas = datasets.MNIST(folder, train=False, transform=mnist_transform)
     return train_datas, test_datas
 
 

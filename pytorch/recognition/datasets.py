@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from common_path import *
 
 class CommonDataset:
     train_transform = transforms.Compose(
@@ -44,7 +43,7 @@ class CommonDataset:
 
         return train_datas, test_datas
 
-    def mnist(self, transform=True):
+    def mnist(self, transform=True, download=False):
         '''
         mnist
         :param transform: bool
@@ -63,8 +62,8 @@ class CommonDataset:
             t1 = image_transform
             t2 = image_transform
 
-        train_datas = datasets.MNIST(root=self.root, train=True, transform=t1)
-        test_datas = datasets.MNIST(root=self.root, train=False, transform=t2)
+        train_datas = datasets.MNIST(root=self.root, train=True, transform=t1, download=download)
+        test_datas = datasets.MNIST(root=self.root, train=False, transform=t2, download=download)
 
         return train_datas, test_datas
 
@@ -102,10 +101,10 @@ def test():
 
 
 def test2():
-    folder = data_path
+    folder = '../../../datas'
     dataset = CommonDataset(folder)
 
-    train_datas, test_datas = dataset.mnist(transform=False)
+    train_datas, test_datas = dataset.mnist(transform=False, download=True)
     a1, b1 = train_datas[22]
     a2 = a1.resize((64, 64))
     a2.show()

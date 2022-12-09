@@ -18,7 +18,6 @@ from torch.utils.tensorboard import SummaryWriter
 cuda = torch.cuda.is_available()
 
 
-
 def calc_mean_std(features):
     """
 
@@ -229,8 +228,6 @@ def test():
     style = 'pytorch/style/res/style/sky.jpg'
     out = net.generate(content, style)
     out.show()
-
-
 
 
 if __name__ == '__main__':

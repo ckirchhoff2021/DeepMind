@@ -11,7 +11,6 @@ from torchvision.utils import save_image
 from style.transformNet import TransformNet
 
 
-
 data_folder = '/Users/chenxiang/Downloads/dataset/datas/celeA'
 style_image = 'res/style5.jpg'
 
@@ -190,7 +189,6 @@ def train():
 
         losses = losses / batches
         print('==> Epoch: [%d]/[%d], train loss = %f' % (epoch, epochs, losses.item()))
-
 
 
 if __name__ == '__main__':

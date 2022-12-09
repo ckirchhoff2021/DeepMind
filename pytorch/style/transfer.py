@@ -8,7 +8,7 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from torchvision import models, transforms, datasets
 
-from pytorch.style.util import *
+from util import *
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -77,19 +77,15 @@ def compute_style_loss(source, target):
     return loss
 
 
-
 def run():
-    content_file = '/Users/chenxiang/Desktop/images/dancing.jpg'
-    # content_file = "/Users/chenxiang/Desktop/images/bro.jpg"
-    style_file = '/Users/chenxiang/Desktop/images/picasso.jpg'
+    content_file = 'res/dancing.jpg'
+    style_file = 'res/picasso.jpg'
 
     content_transform = transforms.Compose([
-        # transforms.CenterCrop((2736,2736)),
         transforms.Resize((256, 256)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-
 
     image_transform = transforms.Compose([
         transforms.Resize((256,256)),
@@ -98,19 +94,20 @@ def run():
     ])
 
     net = VGG16()
+    net = net.cuda()
     content_image = Image.open(content_file)
     content_tensor = content_transform(content_image)
-    content_tensor = content_tensor.unsqueeze(0)
+    content_tensor = content_tensor.unsqueeze(0).cuda()
     content_tensor.requires_grad = False
 
     style_image = Image.open(style_file)
     style_tensor = image_transform(style_image)
-    style_tensor = style_tensor.unsqueeze(0)
+    style_tensor = style_tensor.unsqueeze(0).cuda()
     style_tensor.requires_grad = False
 
     input_image = Image.open(content_file)
     input_tensor = content_transform(input_image)
-    input_tensor = input_tensor.unsqueeze(0)
+    input_tensor = input_tensor.unsqueeze(0).cuda()
     opt = optimizer.Adam([input_tensor.requires_grad_()], lr=0.1)
     epochs = 300
 
@@ -137,14 +134,15 @@ def run():
         loss.backward()
         opt.step()
 
-        print('==> Epoch: [%d]/[%d], loss = %f, style_loss = %f, content_loss = %f' % (epoch, epochs, loss.item(), style_loss.item(), content_loss.item()))
+        print('==> Epoch: [%d]/[%d], loss = %f, style_loss = %f, content_loss = %f' %
+              (epoch, epochs, loss.item(), style_loss.item(), content_loss.item()))
 
-    imshow(input_tensor, title='output')
+    imshow(input_tensor.cpu(), title='output')
     plt.show()
 
     out = recover_image(input_tensor)
     out_image = Image.fromarray(out)
-    out_image.save('bro.png')
+    out_image.save('picasso.png')
 
 
 def main():
@@ -153,7 +151,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
     # A = torch.randn(1,3,128,128)
     # B = gram_matrix(A)

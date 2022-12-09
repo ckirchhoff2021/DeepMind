@@ -62,7 +62,7 @@ def run():
 
         epoch_loss = losses / len(train_loader)
         epoch_acc = successes / counts
-        print('=> Epoch-[%d], training average : loss = %.4f, acc = %.4f' % (epoch_loss, epoch_acc))
+        print('=> Epoch-[%d], training average : loss = %.4f, acc = %.4f' % (epoch, epoch_loss, epoch_acc))
 
         net.eval()
         counts = successes = 0
@@ -87,7 +87,6 @@ def run():
                 'acc': best_acc
             }
             torch.save(state, 'model.pth')
-
 
 
 if __name__ == '__main__':

@@ -254,14 +254,12 @@ def test():
     out.show()
 
 
-
 def main():
     net = AdaINNet()
     c = torch.randn(1,3,256,256)
     s = torch.randn(1,3,256,256)
     y = net(c,s)
     print(y)
-
 
 
 if __name__ == '__main__':
