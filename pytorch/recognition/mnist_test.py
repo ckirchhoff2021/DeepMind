@@ -22,6 +22,7 @@ def run():
     if cuda:
         # net = nn.DataParallel(net)
         net = net.cuda()
+    # net = torch.compile(net)
 
     epochs = 2
     best_acc = 0.0

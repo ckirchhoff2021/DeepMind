@@ -10,7 +10,6 @@ import cv2
 import numpy as np
 
 
-
 class VGGLoss(nn.Module):
     def __init__(self):
         super(VGGLoss, self).__init__()
@@ -77,6 +76,7 @@ class AutoEncoder(nn.Module):
         y2 = y2.view(y2.size(0), 16, 4, 4)
         y2 = self.up_sampling(y2)
         return y2
+
 
 def main():
     net = AutoEncoder(6)

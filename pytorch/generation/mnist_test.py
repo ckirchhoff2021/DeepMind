@@ -11,11 +11,13 @@ from torch.utils.data import DataLoader
 import os
 import numpy as np
 from PIL import Image
-from common_path import *
 
-image_path = os.path.join(output_path, 'images')
+image_path = '../../../datas/images'
+model_path = '../../../datas/weights'
+mnist_path = '../../../datas'
 
 cuda = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -24,6 +26,7 @@ def weights_init(m):
     elif classname.find('BatchNorm') != -1:
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
+
 
 def to_image(x):
     y = (x + 1) * 0.5
@@ -100,10 +103,10 @@ def train_cGAN():
                 fake_data = fake_data.view(fake_data.size(0), 1, 28, 28)
                 image = to_image(fake_data)
                 image_name = 'cGAN' + str(epoch) + '-' + str(index + 1) + '.png'
-                save_image(image, os.path.join(IMAGE_PATH, image_name), nrow=16)
+                save_image(image, os.path.join(model_path, image_name), nrow=16)
 
-        torch.save(D.state_dict(), os.path.join(MODEL_PATH, 'cGAN_D.pkl'))
-        torch.save(D.state_dict(), os.path.join(MODEL_PATH, 'cGAN_G.pkl'))
+        torch.save(D.state_dict(), os.path.join(model_path, 'cGAN_D.pkl'))
+        torch.save(D.state_dict(), os.path.join(model_path, 'cGAN_G.pkl'))
 
         noise = torch.randn(100, 100).to(cuda)
         label = torch.zeros(100, 10).to(cuda)
@@ -113,7 +116,7 @@ def train_cGAN():
         fake_data = fake_data.view(fake_data.size(0), 1, 28, 28)
         image = to_image(fake_data)
         image_name = 'cGAN' + str(epoch) + '.png'
-        save_image(image, os.path.join(IMAGE_PATH, image_name), nrow=10)
+        save_image(image, os.path.join(image_path, image_name), nrow=10)
 
 
 def train_cdcGAN():
@@ -156,8 +159,8 @@ def train_cdcGAN():
             real_out = D(real_data, label_matrix)
 
             noise = torch.randn(n_batch, 100, 1, 1).cuda()
-            label_onehot = torch.zeros(n_batch, 10).scatter_(1, label.view(n_batch, 1), 1).view(n_batch, 10, 1,
-                                                                                                1).cuda()
+            label_onehot = torch.zeros(n_batch, 10).scatter_(1, label.view(n_batch, 1), 1)
+            label_onehot = label_onehot.view(n_batch, 10, 1, 1).cuda()
             fake_data = G(noise, label_onehot)
             fake_label = torch.zeros(n_batch, 1).cuda()
             fake_out = D(fake_data, label_matrix)
@@ -175,7 +178,7 @@ def train_cdcGAN():
 
             for idx in range(10):
                 fake_data = G(noise, label_onehot)
-                fake_out = D(fake_data, label_extd)
+                fake_out = D(fake_data, label_matrix)
                 g_loss = criterion(fake_out, real_label)
 
                 g_optimizer.zero_grad()
@@ -190,10 +193,10 @@ def train_cdcGAN():
             if (index + 1) % 200 == 0:
                 image = to_image(fake_data)
                 image_name = 'cDCGAN' + str(epoch) + '-' + str(index + 1) + '.png'
-                save_image(image, os.path.join(IMAGE_PATH, image_name), nrow=16)
+                save_image(image, os.path.join(image_path, image_name), nrow=16)
 
-        torch.save(D.state_dict(), os.path.join(MODEL_PATH, 'cDCGAN_D.pkl'))
-        torch.save(D.state_dict(), os.path.join(MODEL_PATH, 'cDCGAN_G.pkl'))
+        torch.save(D.state_dict(), os.path.join(model_path, 'cDCGAN_D.pkl'))
+        torch.save(D.state_dict(), os.path.join(model_path, 'cDCGAN_G.pkl'))
 
         noise = torch.randn(100, 100, 1, 1).to(cuda)
         label = torch.zeros(100, 10).to(cuda)
@@ -203,7 +206,7 @@ def train_cdcGAN():
         fake_data = G(noise, label)
         image = to_image(fake_data)
         image_name = 'cDCGAN' + str(epoch) + '.png'
-        save_image(image, os.path.join(IMAGE_PATH, image_name), nrow=10)
+        save_image(image, os.path.join(image_path, image_name), nrow=10)
 
 
 def main():

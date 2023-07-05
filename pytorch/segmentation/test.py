@@ -62,7 +62,6 @@ def load_fcn_resnet():
     return net
 
 
-
 class Segmentation:
     def __init__(self):
         self.net = load_fcn8s()
