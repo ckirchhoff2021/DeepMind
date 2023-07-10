@@ -27,8 +27,30 @@ def longest_subarray_1493(nums):
     return ret
 
 
+def simplify_path_71(path):
+    values = path.split('/')
+    ret = list()
+    for val in values:
+        if len(val) == 0:
+            continue
+        if val == '.':
+            continue
+        elif val == '..':
+            if len(ret) > 0:
+                ret.pop()
+        else:
+            ret.append(val)
+    return '/' + '/'.join(ret)
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
-        nums = [1,1,1]
+        nums = [1, 1, 1]
         ret = longest_subarray_1493(nums)
         self.assertEqual(ret, 2)
+
+    def test_simplify_path(self):
+        path = "/../"
+        expect = "/"
+        ret = simplify_path_71(path)
+        self.assertEqual(expect, ret)
