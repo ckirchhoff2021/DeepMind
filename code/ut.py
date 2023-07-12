@@ -43,6 +43,46 @@ def simplify_path_71(path):
     return '/' + '/'.join(ret)
 
 
+def n_queen(n):
+    ret = list()
+
+    def check_valid(path):
+        if len(path) == n:
+            ret.append(path[:])
+            return
+        row = len(path)
+        for col in range(n):
+            valid = True
+            for pos in path:
+                i, j = pos
+                if row == i or col == j or abs(i - row) == abs(j - col):
+                    valid = False
+                    break
+            if not valid:
+                continue
+            path.append((row, col))
+            check_valid(path)
+            path.pop()
+    paths = list()
+    check_valid(paths)
+    return ret
+
+
+def print_n_queen(x):
+    n = len(x)
+    zeros = [[0] * n for i in range(n)]
+    for (i, j) in x:
+        zeros[i][j] = 1
+    for i in range(n):
+        print(' '.join([str(val) for val in zeros[i]]))
+    print('\n')
+
+
+def total_n_queens(n):
+    ret = n_queen(n)
+    return len(ret)
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -54,3 +94,12 @@ class TestDailyCode(TestCase):
         expect = "/"
         ret = simplify_path_71(path)
         self.assertEqual(expect, ret)
+
+    def test_n_queen(self):
+        ret = n_queen(8)
+        print(ret)
+        print(len(ret))
+        expect = True
+        for x in ret:
+            print_n_queen(x)
+        self.assertEqual(True, expect)
