@@ -83,6 +83,66 @@ def total_n_queens(n):
     return len(ret)
 
 
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+    @staticmethod
+    def create_list(values):
+        if len(values) == 0:
+            return None
+        head = ListNode(values[0])
+        p = head
+        for i in range(1, len(values)):
+            p.next = ListNode(values[i])
+            p = p.next
+        return head
+
+    def get_data(self):
+        ret = [self.val]
+        p = self.next
+        while p:
+            ret.append(p.val)
+            p = p.next
+        return ret
+
+
+def delete_duplicates_83(head):
+    root = head
+    if root is None or root.next is None:
+        return root
+    prev = root
+    prev.delete = False
+    val = prev.val
+    cur = root.next
+    while cur:
+        if cur.val == val:
+            cur.delete = True
+            prev.delete = True
+        else:
+            cur.delete = False
+        val = cur.val
+        prev = cur
+        cur = cur.next
+
+    p = head
+    while p and p.delete:
+        p = p.next
+    if p is None or p.next is None:
+        return p
+    prev = p
+    q = p.next
+    while q:
+        if q.delete:
+            q = q.next
+            prev.next = q
+        else:
+            prev = q
+            q = q.next
+    return root
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -103,3 +163,11 @@ class TestDailyCode(TestCase):
         for x in ret:
             print_n_queen(x)
         self.assertEqual(True, expect)
+
+    def test_delete_duplicates(self):
+        head = ListNode.create_list([1,2,3,3,4,4,5])
+        head = delete_duplicates_83(head)
+        ret = head.get_data()
+        print(ret)
+        expect = (1,2,5)
+        self.assertEqual(expect, tuple(ret))
