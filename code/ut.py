@@ -143,6 +143,29 @@ def delete_duplicates_83(head):
     return root
 
 
+def min_window_76(s, t):
+    m = len(s)
+    n = len(t)
+    if m < n:
+        return ""
+    start = -1
+    end = m - 1
+    for i in range(0, m-n+1):
+        if s[i] not in t:
+            continue
+        target = list(t)
+        for j in range(i, m):
+            if s[j] in target:
+                target.remove(s[j])
+            if len(target) == 0:
+                if j - i < end - start:
+                    start, end = i, j
+                break
+    if start == -1:
+        return ""
+    return s[start:end+1]
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -171,3 +194,10 @@ class TestDailyCode(TestCase):
         print(ret)
         expect = (1,2,5)
         self.assertEqual(expect, tuple(ret))
+
+    def test_min_window(self):
+        s = "ADOBECODEBANC"
+        t = "ABC"
+        ret = min_window_76(s, t)
+        expect = "BANC"
+        self.assertEqual(ret, expect)
