@@ -1,4 +1,9 @@
+import json
+import os
+import glob
 import jieba
+from tqdm import *
+from multiprocessing import Process
 
 news_file = r'D:\datas\THUCNews\THUCNews\体育\1001.txt'
 
@@ -22,6 +27,34 @@ def words_filter(words):
             continue
         ret.append(x)
     return ret
+
+def multiprocess_cut():
+    def handle(label, i):
+        vocabulary = dict()
+        folder = os.path.join(data_folder, label)
+        files = list(glob.glob(os.path.join(folder, '*.txt')))
+        print('==> ', label, len(files))
+        cut_folder = os.path.join(out_folder, str(i))
+        if not os.path.exists(cut_folder):
+            os.mkdir(cut_folder)
+        for j, file in tqdm(enumerate(files)):
+            with open(file, 'r') as fr:
+                sentences = fr.read()
+                words = chs_filter(sentences)
+                segments = jieba.lcut(words, cut_all=False, HMM=True)
+                remain = words_filter(segments)
+                with open(os.path.join(cut_folder, f'{j}.json'), 'w') as fw:
+                    json.dump(remain, fw, ensure_ascii=False)
+                for x in remain:
+                    frequency = vocabulary.get(x, 0) + 1
+                    vocabulary[x] = frequency
+        with open(os.path.join(cut_folder, 'vocab.json'), 'w') as f:
+            json.dump(vocabulary, f, ensure_ascii=False)
+
+    for i, label in enumerate(txt_labels):
+        p = Process(target=handle, args=(label, i))
+        p.start()
+    print('Done ......')
 
 def word_segmentation():
     x = "简直了，现在很不开心"
