@@ -2,6 +2,10 @@ import jieba
 
 news_file = r'D:\datas\THUCNews\THUCNews\体育\1001.txt'
 
+txt_labels = ["体育", "娱乐" ,"家居" , "彩票" , "房产", "教育" ,"时尚", "时政" ,"星座" ,"游戏" ,"社会" ,"科技","股票","财经"]
+invalid_words = ["了", "你", "我", "他", "的", "年", "月", "日", "可能", "会", "我们", "他们", "你们", "这", "那", "时",
+                 "请", "让", "而且", "和", "而"]
+
 
 def chs_filter(values):
     ret = ''
@@ -11,6 +15,13 @@ def chs_filter(values):
                 ret += uchar
     return ret
 
+def words_filter(words):
+    ret = list()
+    for x in words:
+        if x in invalid_words:
+            continue
+        ret.append(x)
+    return ret
 
 def word_segmentation():
     x = "简直了，现在很不开心"
