@@ -42,6 +42,34 @@ class SelfAttention(nn.Module):
         output = torch.bmm(out, wo)
         return output
 
+class SelfAttentionV2(nn.Module):
+    def __init__(self, token_dim, heads=10):
+        super(SelfAttentionV2, self).__init__()
+        self.heads = heads
+        self.wq_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.wk_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.wv_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.scale = token_dim ** 0.5
+        self.wo = nn.Linear(token_dim * heads, token_dim)
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        out_list = []
+        for i in range(self.heads):
+            fwq = self.wq_list[i]
+            Q = fwq(x)
+            fwk = self.wk_list[i]
+            K = fwk(x)
+            fwv = self.wv_list[i]
+            V = fwv(x)
+            KT = K.transpose(2,1)
+            S = torch.bmm(Q, KT) / self.scale
+            P = torch.softmax(S, dim=-1)
+            O = torch.bmm(P, V)
+            out_list.append(O)
+        out = torch.cat(out_list, dim=-1)
+        output = self.wo(out)
+        return output
 
 def group_attention(Q,K,V,groups,scale):
     Qs = torch.chunk(Q, groups, dim=1)
@@ -96,11 +124,39 @@ class GroupAttention(nn.Module):
         return output
 
 
+class GroupAttentionV2(nn.Module):
+    def __init__(self, token_dim, groups=4, heads=10):
+        super(GroupAttentionV2, self).__init__()
+        self.heads = heads
+        self.groups = groups
+        self.wq_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.wk_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.wv_list = nn.ModuleList([nn.Linear(token_dim, token_dim, bias=False) for i in range(heads)])
+        self.scale = token_dim ** 0.5
+        self.wo = nn.Linear(token_dim * heads, token_dim, bias=False)
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        out_list = []
+        for i in range(self.heads):
+            fwq = self.wq_list[i]
+            Q = fwq(x)
+            fwk = self.wk_list[i]
+            K = fwk(x)
+            fwv = self.wv_list[i]
+            V = fwv(x)
+            O = group_attention(Q, K, V, self.groups, self.scale)
+            out_list.append(O)
+        out = torch.cat(out_list, dim=-1)
+        output = self.wo(out)
+        return output
+        
+
 class AttentionModel(nn.Module):
     def __init__(self, token_dim=8):
         super(AttentionModel, self).__init__()
-        self.embeddings = nn.Embedding(100000, token_dim)
-        self.encoder = SelfAttention(token_dim, heads=4)
+        self.embeddings = nn.Embedding(21128, token_dim)
+        self.encoder = SelfAttentionV2(token_dim, heads=4)
         self.sequence_length = 512
         fnn_dim = self.sequence_length * token_dim
         self.fnn = nn.Sequential(
@@ -120,8 +176,8 @@ class AttentionModel(nn.Module):
 class GroupAttentionModel(nn.Module):
     def __init__(self, token_dim=8, groups=4):
         super(GroupAttentionModel, self).__init__()
-        self.embeddings = nn.Embedding(100000, token_dim)
-        self.encoder = GroupAttention(token_dim, heads=4, groups=groups)
+        self.embeddings = nn.Embedding(21128, token_dim)
+        self.encoder = GroupAttentionV2(token_dim, heads=4, groups=groups)
         self.sequence_length = 512
         fnn_dim = self.sequence_length * token_dim
         self.fnn = nn.Sequential(
