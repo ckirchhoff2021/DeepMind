@@ -86,7 +86,6 @@ def group_attention(Q,K,V,groups,scale):
     O = torch.cat(Os, dim=1)
     return O
 
-
 class GroupAttention(nn.Module):
     def __init__(self, token_dim, groups=4, heads=10):
         super(GroupAttention, self).__init__()
@@ -122,7 +121,6 @@ class GroupAttention(nn.Module):
         out = torch.cat(out_list, dim=-1)
         output = self.wo(out)
         return output
-
 
 class GroupAttentionV2(nn.Module):
     def __init__(self, token_dim, groups=4, heads=10):
@@ -172,7 +170,6 @@ class AttentionModel(nn.Module):
         out = self.fnn(x2)
         return out
 
-
 class GroupAttentionModel(nn.Module):
     def __init__(self, token_dim=8, groups=4):
         super(GroupAttentionModel, self).__init__()
@@ -192,7 +189,6 @@ class GroupAttentionModel(nn.Module):
         x2 = x1.view(x1.size(0), -1)
         out = self.fnn(x2)
         return out
-
 
 if __name__ == '__main__':
     model = AttentionModel(token_dim=8)
