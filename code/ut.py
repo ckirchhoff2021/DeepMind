@@ -1,6 +1,7 @@
 import copy
 from unittest import TestCase
 from collections import OrderedDict
+from .base import TreeNode
 
 def longest_subarray_1493(nums):
     N = len(nums)
@@ -204,6 +205,26 @@ def min_window_speed_76(s, t):
     return s[start:end+1]
 
 
+ def pathSum(root, targetSum):
+    ret = list()
+    if root is None:
+        return ret
+    def traverse(node, target, path):
+        val = node.val
+        remain = target - val
+        path.append(node.val)
+        if remain == 0 and node.left is None and node.right is None:
+            ret.append(path[:])
+        if node.left:
+            traverse(node.left, remain, path)
+            path.pop()
+        if node.right:
+            traverse(node.right, remain, path)
+            path.pop()
+    traverse(root, targetSum, [])
+    return ret
+
+
 def is_scramble_step(x1, x2, d1):
     if x1 == x2:
         return True
@@ -308,3 +329,11 @@ class TestDailyCode(TestCase):
         s2 = "rgeat"
         ret = is_scramble(s1, s2)
         self.assertTrue(ret)
+
+    def test_path_sum(self):
+        values = [5,4,8,11,None,13,4,7,2,None,None,5,1]
+        root = TreeNode.create(values)
+        ret = pathSum(root, 22)
+        output = [[5,4,11,2],[5,8,4,5]]
+        self.assertIn(output[0], ret)
+        self.assertIn(output[1], ret)
