@@ -45,6 +45,40 @@ def simplify_path_71(path):
     return '/' + '/'.join(ret)
 
 
+ def isBalanced(root):
+    def get_depth(node):
+        if node is None:
+            return 0
+        if node.left is None and node.right is None:
+            node.depth = 1
+            return 1
+        left = get_depth(node.left)
+        right = get_depth(node.right)
+        depth = max(left, right) + 1
+        node.depth = depth
+        return depth
+
+    if root is None:
+        return True
+    get_depth(root)
+        
+    def checkBalanced(node):
+        if node is None:
+            return True
+        left = node.left
+        right = node.right
+        if left is None and right is None:
+            return True
+        if left is None and right.depth > 1:
+            return False
+        if right is None and left.depth > 1:
+            return False
+        if left and right and abs(left.depth - right.depth) > 1:
+            return False
+        return checkBalanced(left) and checkBalanced(right)
+    return checkBalanced(root)
+
+
 def n_queen(n):
     ret = list()
 
@@ -337,3 +371,9 @@ class TestDailyCode(TestCase):
         output = [[5,4,11,2],[5,8,4,5]]
         self.assertIn(output[0], ret)
         self.assertIn(output[1], ret)
+
+    def test_binary_balanced(self):
+        values = [3,9,20,None,None,15,7]
+        root = TreeNode.create(values)
+        ret = isBalanced(root)
+        self.assertTrue(ret)
