@@ -45,7 +45,7 @@ def simplify_path_71(path):
     return '/' + '/'.join(ret)
 
 
- def isBalanced(root):
+def isBalanced(root):
     def get_depth(node):
         if node is None:
             return 0
@@ -239,7 +239,7 @@ def min_window_speed_76(s, t):
     return s[start:end+1]
 
 
- def pathSum(root, targetSum):
+def pathSum(root, targetSum):
     ret = list()
     if root is None:
         return ret
