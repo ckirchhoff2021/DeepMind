@@ -322,6 +322,29 @@ def is_scramble(x1, x2):
     return ret
 
 
+def flatten(root):
+    def visit(node, values, nodes):
+        if node is None:
+            return
+        values.append(node.val)
+        nodes.append(node)
+        visit(node.left, values, nodes)
+        visit(node.right, values, nodes)
+    values = []
+    nodes = []
+    visit(root, values, nodes)
+    N = len(values)
+    for i in range(N):
+        node = nodes[N-1-i]
+        node.val = values[N-1-i]
+        node.left = None
+        if i == 0:
+            node.right = None
+        else:
+            node.right = nodes[N-i]
+    return root
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
