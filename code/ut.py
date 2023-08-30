@@ -362,21 +362,22 @@ def buildTree(pre_order, in_order):
     return root
 
 
- def buildTree2(self, inorder, postorder):
-        if len(inorder) == 0:
-            return None
-        root = TreeNode(postorder[-1])
-        index = inorder.index(postorder[-1])
-        left_in = inorder[:index]
-        right_in = inorder[index+1:]
-        left_num = len(left_in)
-        left_post = postorder[:left_num]
-        right_post = postorder[left_num:-1]
-        left = self.buildTree(left_in, left_post)
-        right = self.buildTree(right_in, right_post)
-        root.left = left
-        root.right = right
-        return root
+def buildTree2(inorder, postorder):
+    if len(inorder) == 0:
+        return None
+    root = TreeNode(postorder[-1])
+    index = inorder.index(postorder[-1])
+    left_in = inorder[:index]
+    right_in = inorder[index+1:]
+    left_num = len(left_in)
+    left_post = postorder[:left_num]
+    right_post = postorder[left_num:-1]
+    left = buildTree2(left_in, left_post)
+    right = buildTree2(right_in, right_post)
+    root.left = left
+    root.right = right
+    return root
+
 
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
@@ -435,8 +436,15 @@ class TestDailyCode(TestCase):
         self.assertTrue(ret)
 
     def test_buildtree(self):
-        pre_order = [6, 5, 2, 3 ,1, 4, 2, 8]
+        pre_order = [6, 5, 2, 3, 1, 4, 2, 8]
         in_order = [2, 5, 1, 3, 6, 2, 4, 8]
         root = buildTree(pre_order, in_order)
+        value = root.left.right.left.val
+        self.assertEqual(value, 1)
+
+    def test_buildtree2(self):
+        post_order = [2, 1, 3, 5, 2, 8, 4, 6]
+        in_order = [2, 5, 1, 3, 6, 2, 4, 8]
+        root = buildTree2(in_order, post_order)
         value = root.left.right.left.val
         self.assertEqual(value, 1)
