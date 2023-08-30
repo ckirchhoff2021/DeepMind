@@ -362,6 +362,22 @@ def buildTree(pre_order, in_order):
     return root
 
 
+ def buildTree2(self, inorder, postorder):
+        if len(inorder) == 0:
+            return None
+        root = TreeNode(postorder[-1])
+        index = inorder.index(postorder[-1])
+        left_in = inorder[:index]
+        right_in = inorder[index+1:]
+        left_num = len(left_in)
+        left_post = postorder[:left_num]
+        right_post = postorder[left_num:-1]
+        left = self.buildTree(left_in, left_post)
+        right = self.buildTree(right_in, right_post)
+        root.left = left
+        root.right = right
+        return root
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
