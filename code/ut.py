@@ -422,5 +422,5 @@ class TestDailyCode(TestCase):
         pre_order = [6, 5, 2, 3 ,1, 4, 2, 8]
         in_order = [2, 5, 1, 3, 6, 2, 4, 8]
         root = buildTree(pre_order, in_order)
-        value = root.left.right.left
+        value = root.left.right.left.val
         self.assertEqual(value, 1)
