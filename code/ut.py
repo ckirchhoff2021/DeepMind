@@ -345,6 +345,23 @@ def flatten(root):
     return root
 
 
+def buildTree(pre_order, in_order):
+    if len(pre_order) == 0:
+        return None
+    root = TreeNode(pre_order[0])
+    index = in_order.index(pre_order[0])
+    left_in = in_order[:index]
+    right_in = in_order[index+1:]
+    left_num = len(left_in)
+    left_pre = pre_order[1:left_num+1]
+    right_pre = pre_order[left_num+1:]
+    left = buildTree(left_pre, left_in)
+    right = buildTree(right_pre, right_in)
+    root.left = left
+    root.right = right
+    return root
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -400,3 +417,10 @@ class TestDailyCode(TestCase):
         root = TreeNode.create(values)
         ret = isBalanced(root)
         self.assertTrue(ret)
+
+    def test_buildtree(self):
+        pre_order = [6, 5, 2, 3 ,1, 4, 2, 8]
+        in_order = [2, 5, 1, 3, 6, 2, 4, 8]
+        root = buildTree(pre_order, in_order)
+        value = root.left.right.left
+        self.assertEqual(value, 1)
