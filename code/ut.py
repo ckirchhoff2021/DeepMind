@@ -431,6 +431,20 @@ def topk_frequent(nums, k):
     return ret
 
 
+def find_longest_chain_646(pairs):
+    values = sorted(pairs, key=lambda x: x[1])
+    count = 1
+    N = len(values)
+    index = 0
+    for i in range(1, N):
+        p1 = values[index]
+        p2 = values[i]
+        if p2[0] > p1[1]:
+            count += 1
+            index = i
+    return count
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -524,3 +538,8 @@ class TestDailyCode(TestCase):
         ret = topk_frequent(values, 2)
         gt = [1, 2]
         self.assertEqual(gt, ret)
+
+    def test_longest_chain(self):
+        pairs = [[1, 2], [2, 3], [3, 4]]
+        ret = find_longest_chain_646(pairs)
+        self.assertEqual(ret, 2)
