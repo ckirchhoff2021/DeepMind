@@ -390,6 +390,21 @@ def max_profit_122(stocks):
     return ret
 
 
+def sorted_array_t_BST_108(nums):
+    N = len(nums)
+    if N == 0:
+        return None
+    mid = N // 2
+    left_values = nums[:mid]
+    root = TreeNode(nums[mid])
+    left = sorted_array_t_BST_108(left_values)
+    right_values = nums[mid+1:]
+    right = sorted_array_t_BST_108(right_values)
+    root.left = left
+    root.right = right
+    return root
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -465,3 +480,10 @@ class TestDailyCode(TestCase):
         profit = max_profit_122(stocks)
         ret = 7
         self.assertEqual(profit, ret)
+
+    def test_sorted_array_t_BST(self):
+        values = [-10, -3, 0, 5, 9]
+        root = sorted_array_t_BST_108(values)
+        ret = root.right.val
+        self.assertEqual(ret, 9)
+        
