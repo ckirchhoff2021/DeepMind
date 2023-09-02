@@ -417,6 +417,20 @@ def longest_consecutive_128(nums):
     return max(dp)
 
 
+def topk_frequent(nums, k):
+    frequences = dict()
+    for val in nums:
+        if val not in frequences:
+            frequences[val] = 0
+        frequences[val] += 1
+    datas = list(frequences.items())
+    datas = sorted(datas, key=lambda x:x[1], reverse=True)
+    ret = list()
+    for i in range(k):
+        ret.append(datas[i][0])
+    return ret
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -505,3 +519,8 @@ class TestDailyCode(TestCase):
         num = longest_consecutive_128(values)
         self.assertEqual(num, 3)
 
+    def test_topk_frequences(self):
+        values = [1, 2, 1, 1, 2, 3]
+        ret = topk_frequent(values, 2)
+        gt = [1, 2]
+        self.assertEqual(gt, ret)
