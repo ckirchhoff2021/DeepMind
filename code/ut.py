@@ -412,6 +412,8 @@ def longest_consecutive_128(nums):
     for i in range(1, N):
         if values[i] == values[i-1] + 1:
             dp[i] = dp[i-1] + 1
+        if values[i] == values[i-1]:
+            dp[i] = dp[i-1]
     return max(dp)
 
 
@@ -498,7 +500,8 @@ class TestDailyCode(TestCase):
         self.assertEqual(ret, 9)
 
     def test_longest_consecutive(self):
-        values = [100, 4, 200, 1, 3, 2]
+        # values = [100, 4, 200, 1, 3, 2]
+        values = [1, 2, 0, 1]
         num = longest_consecutive_128(values)
-        self.assertEqual(num, 4)
+        self.assertEqual(num, 3)
 
