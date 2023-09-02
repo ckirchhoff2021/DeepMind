@@ -405,6 +405,16 @@ def sorted_array_t_BST_108(nums):
     return root
 
 
+def longest_consecutive_128(nums):
+    values = sorted(nums)
+    N = len(values)
+    dp = [1] * N
+    for i in range(1, N):
+        if values[i] == values[i-1] + 1:
+            dp[i] = dp[i-1] + 1
+    return max(dp)
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -486,4 +496,9 @@ class TestDailyCode(TestCase):
         root = sorted_array_t_BST_108(values)
         ret = root.right.val
         self.assertEqual(ret, 9)
-        
+
+    def test_longest_consecutive(self):
+        values = [100, 4, 200, 1, 3, 2]
+        num = longest_consecutive_128(values)
+        self.assertEqual(num, 4)
+
