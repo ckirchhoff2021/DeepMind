@@ -445,6 +445,30 @@ def find_longest_chain_646(pairs):
     return count
 
 
+def max_path_sum_124(root):
+    if root is None:
+        return 0
+
+    def max_path_sum(node, values):
+        if node is None:
+            return 0
+        left_sum = max_path_sum(node.left, values)
+        right_sum = max_path_sum(node.right, values)
+        current_sum = node.val
+        if left_sum > 0:
+            current_sum += left_sum
+        if right_sum > 0:
+            current_sum += right_sum
+        if current_sum > values[0]:
+            values[0] = current_sum
+        max_sum = max(left_sum, right_sum, 0)
+        return node.val + max_sum
+
+    records = [root.val - 1]
+    max_path_sum(root, records)
+    return records[0]
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -488,15 +512,15 @@ class TestDailyCode(TestCase):
         self.assertTrue(ret)
 
     def test_path_sum(self):
-        values = [5,4,8,11,None,13,4,7,2,None,None,5,1]
+        values = [5, 4, 8, 11, None, 13, 4, 7, 2, None, None, 5, 1]
         root = TreeNode.create(values)
         ret = pathSum(root, 22)
-        output = [[5,4,11,2],[5,8,4,5]]
+        output = [[5, 4, 11, 2], [5, 8, 4, 5]]
         self.assertIn(output[0], ret)
         self.assertIn(output[1], ret)
 
     def test_binary_balanced(self):
-        values = [3,9,20,None,None,15,7]
+        values = [3, 9, 20, None, None, 15, 7]
         root = TreeNode.create(values)
         ret = isBalanced(root)
         self.assertTrue(ret)
@@ -542,4 +566,16 @@ class TestDailyCode(TestCase):
     def test_longest_chain(self):
         pairs = [[1, 2], [2, 3], [3, 4]]
         ret = find_longest_chain_646(pairs)
+        self.assertEqual(ret, 2)
+
+    def test_max_path_sum(self):
+        values = [-10, 9, 20, None, None, 15, 7]
+        root = TreeNode.create(values)
+        ret = max_path_sum_124(root)
+        self.assertEqual(ret, 42)
+
+    def test_max_path_sum_2(self):
+        values = [2, -1]
+        root = TreeNode.create(values)
+        ret = max_path_sum_124(root)
         self.assertEqual(ret, 2)
