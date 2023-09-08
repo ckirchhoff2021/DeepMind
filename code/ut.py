@@ -469,6 +469,53 @@ def max_path_sum_124(root):
     return records[0]
 
 
+def ladder_length_127(beginWord, endWord, wordList) -> int:
+    if endWord not in wordList:
+        return 0
+    def string_diff(x1, x2):
+        ret = [x1[i] != x2[i] for i in range(len(x1))]
+        return sum(ret)
+    N = len(wordList)
+    data_dict = dict()
+    for i in range(N):
+        A = wordList[i]
+        if A not in data_dict:
+            data_dict[A] = list()
+        for j in range(i+1, N):
+            B = wordList[j]
+            if B not in data_dict:
+                data_dict[B] = list()
+            d = string_diff(A, B)
+            if d == 1:
+                data_dict[A].append(B)
+                data_dict[B].append(A)
+    candidates = list()
+    for w in wordList:
+        d = string_diff(beginWord, w)
+        if d == 1:
+            candidates.append(w)
+    if len(candidates) == 0:
+        return 0
+    data_dict[beginWord] = candidates
+    def visit(path, distance):
+        c = path[-1]
+        words = data_dict[c]
+        if endWord in words:
+            path_length = len(path) + 1
+            distance[0] = path_length if path_length < distance[0] else distance[0]
+            return
+        for w in words:
+            if w in path:
+                continue
+            path.append(w)
+            visit(path, distance)
+            path.pop()
+    dist = [len(wordList) + 2]
+    visit([beginWord], dist)
+    ret = dist[0] if dist[0] < len(wordList) + 2 else 0
+    return ret
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
