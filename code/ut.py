@@ -469,20 +469,21 @@ def max_path_sum_124(root):
     return records[0]
 
 
-def ladder_length_127(beginWord, endWord, wordList) -> int:
-    if endWord not in wordList:
+def ladder_length_127(begin_word, end_word, word_list):
+    if end_word not in word_list:
         return 0
+
     def string_diff(x1, x2):
-        ret = [x1[i] != x2[i] for i in range(len(x1))]
-        return sum(ret)
-    N = len(wordList)
+        eq_list = [x1[i] != x2[i] for i in range(len(x1))]
+        return sum(eq_list)
+    word_num = len(word_list)
     data_dict = dict()
-    for i in range(N):
-        A = wordList[i]
+    for i in range(word_num):
+        A = word_list[i]
         if A not in data_dict:
             data_dict[A] = list()
-        for j in range(i+1, N):
-            B = wordList[j]
+        for j in range(i+1, word_num):
+            B = word_list[j]
             if B not in data_dict:
                 data_dict[B] = list()
             d = string_diff(A, B)
@@ -490,19 +491,21 @@ def ladder_length_127(beginWord, endWord, wordList) -> int:
                 data_dict[A].append(B)
                 data_dict[B].append(A)
     candidates = list()
-    for w in wordList:
-        d = string_diff(beginWord, w)
+    for w in word_list:
+        d = string_diff(begin_word, w)
         if d == 1:
             candidates.append(w)
     if len(candidates) == 0:
         return 0
-    data_dict[beginWord] = candidates
+    data_dict[begin_word] = candidates
+
     def visit(path, distance):
         c = path[-1]
         words = data_dict[c]
-        if endWord in words:
+        if end_word in words:
             path_length = len(path) + 1
             distance[0] = path_length if path_length < distance[0] else distance[0]
+            # print(path)
             return
         for w in words:
             if w in path:
@@ -510,9 +513,9 @@ def ladder_length_127(beginWord, endWord, wordList) -> int:
             path.append(w)
             visit(path, distance)
             path.pop()
-    dist = [len(wordList) + 2]
-    visit([beginWord], dist)
-    ret = dist[0] if dist[0] < len(wordList) + 2 else 0
+    dist = [word_num + 2]
+    visit([begin_word], dist)
+    ret = dist[0] if dist[0] < word_num + 2 else 0
     return ret
 
 
@@ -626,3 +629,8 @@ class TestDailyCode(TestCase):
         root = TreeNode.create(values)
         ret = max_path_sum_124(root)
         self.assertEqual(ret, 2)
+
+    def test_ladder_length(self):
+        words = ["hot", "dot", "dog", "lot", "log", "cog"]
+        ret = ladder_length_127("hit", "cog", words)
+        self.assertEqual(ret, 5)
