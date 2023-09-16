@@ -519,6 +519,23 @@ def ladder_length_127(begin_word, end_word, word_list):
     return ret
 
 
+def two_sum_167(numbers, target):
+    N = len(numbers)
+    right = N - 1
+    for left in range(N):
+        x = numbers[left]
+        z = target - x
+        while left < right:
+            y = numbers[right]
+            if y == z:
+                return [left + 1, right + 1]
+            if y < z:
+                break
+            if y > z:
+                right = right - 1
+    return None
+
+
 class TestDailyCode(TestCase):
     def test_longest_subarray(self):
         nums = [1, 1, 1]
@@ -634,3 +651,9 @@ class TestDailyCode(TestCase):
         words = ["hot", "dot", "dog", "lot", "log", "cog"]
         ret = ladder_length_127("hit", "cog", words)
         self.assertEqual(ret, 5)
+
+    def test_two_sum(self):
+        numbers = [1, 2, 5, 11]
+        ret = two_sum_167(numbers, 13)
+        gt = [2, 4]
+        self.assertEqual(ret, gt)
