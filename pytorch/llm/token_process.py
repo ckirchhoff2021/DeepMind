@@ -44,6 +44,7 @@ def mrpc_test():
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
     samples = tokenized_dataset["train"][:10]
+    # remove the string column or the dynamic padding would fail
     samples = {k:v for k, v in samples.items() if k not in ["idx", "text1", "text2", "label_text"]}
     print(samples)
     print([len(x) for x in samples['input_ids']])
