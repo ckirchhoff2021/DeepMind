@@ -44,12 +44,18 @@ def mrpc_test():
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
     samples = tokenized_dataset["train"][:10]
-    samples = {k:v for k, v in samples.items() if k not in ["idx", "text1", "text2"]}
+    samples = {k:v for k, v in samples.items() if k not in ["idx", "text1", "text2", "label_text"]}
     print(samples)
     print([len(x) for x in samples['input_ids']])
     batch = data_collator(samples)
     print({k:v.shape for k, v in batch.items()})
-    
+
+    samples_validation = tokenized_dataset["validation"][:6]
+    samples_validation = {k: v for k, v in samples_validation.items() if k not in ["idx", "text1", "text2", "label_text"]}
+    print([len(x) for x in samples_validation['input_ids']])
+    batch = data_collator(samples_validation)
+    print({k: v.shape for k, v in batch.items()})
+
 
 if __name__ == '__main__':
     # tokenizer_test()
