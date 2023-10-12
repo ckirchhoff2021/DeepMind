@@ -160,7 +160,10 @@ def full_train():
         metric.add_batch(predictions=predictions, references=batch["labels"])
     metrics = metric.compute()
     print(metrics)
+    model.save_pretrained("/home/cx/output/llm")
+    tokenizer.save_pretrained("/home/cx/output/llm")
 
+  
 
 if __name__ == '__main__':
     # tokenizer_test()
