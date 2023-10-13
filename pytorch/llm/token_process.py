@@ -164,6 +164,71 @@ def full_train():
     tokenizer.save_pretrained("/home/cx/output/llm")
 
   
+def test_dataset():
+    # squad_it_dataset = load_dataset("json", data_files="/home/cx/datas/SQuAD_it-train.json.gz", field="data")
+    # print(squad_it_dataset)
+    # tokenizer = transformers.AutoTokenizer.from_pretrained(bert_cased_path, use_fast=False)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(bert_cased_path)
+    def tokenize_function(example):
+        return tokenizer(example["review"])
+
+    data_files = {"train": "/home/cx/datas/drugsComTrain_raw.tsv", "test": "/home/cx/datas/drugsComTest_raw.tsv"}
+    drug_dataset = load_dataset("csv", data_files=data_files, delimiter="\t")
+    drug_sample = drug_dataset["train"].shuffle(seed=42).select(range(1000))
+    # print(drug_sample[:3])
+    print(drug_dataset.keys())
+
+    for split in drug_dataset.keys():
+        assert len(drug_dataset[split]) == len(drug_dataset[split].unique("Unnamed: 0"))
+    drug_dataset = drug_dataset.rename_column(original_column_name="Unnamed: 0", new_column_name="patient_id")
+
+    def lowercase_condition(example):
+        return {"condition": example["condition"].lower()}
+
+    drug_dataset = drug_dataset.filter(lambda x: x["condition"] is not None)
+    drug_dataset = drug_dataset.map(lowercase_condition)
+    drug_dataset = drug_dataset.map(lambda x: {"review_length": len(x["review"].split())})
+    print(drug_dataset["train"].sort("review_length")[:3])
+    drug_dataset =drug_dataset.filter(lambda x: x["review_length"] > 30)
+    print(drug_dataset.num_rows)
+
+    text = "I&#039;m a transformer called BERT"
+    html.unescape(text)
+    print(text)
+    drug_dataset = drug_dataset.map(lambda x: {"review": html.unescape(x["review"])})
+    new_drug_dataset = drug_dataset.map(lambda x: {"review": [html.unescape(o) for o in x["review"]]}, batch_size=True)
+
+    '''
+    import time
+    start = time.time()
+    # drug_dataset = drug_dataset.map(tokenize_function, batched=True, num_proc=8)
+    drug_dataset = drug_dataset.map(tokenize_function, batched=True)
+    end = time.time()
+    print('cost: ', end- start)
+    '''
+
+    def tokenize_and_split(example):
+        result = tokenizer(example["review"], truncation=True, max_length=128, return_overflowing_tokens=True)
+        sample_map = result.pop("overflow_to_sample_mapping")
+        for key, values in example.items():
+            result[key] = [values[i] for i in sample_map]
+        return result
+
+    collate_fn = lambda x: tokenizer(x["review"], truncation=True, max_length=128, return_overflowing_tokens=True)
+    result = collate_fn(drug_dataset['train'][0])
+    print(drug_dataset['train'][0]['review'])
+    print([len(inp) for inp in result["input_ids"]])
+    # tokenized_dataset = drug_dataset.map(tokenize_and_split, batched=True,
+    #                                      remove_columns=drug_dataset['train'].column_names)
+    tokenized_dataset = drug_dataset.map(tokenize_and_split, batched=True)
+
+    print(tokenized_dataset)
+    print(len(drug_dataset['train']))
+    print(len(tokenized_dataset['train']))
+
+    drug_dataset.set_format("pandas")
+    print(drug_dataset["train"][:3])
+    
 
 if __name__ == '__main__':
     # tokenizer_test()
