@@ -228,6 +228,31 @@ def test_dataset():
 
     drug_dataset.set_format("pandas")
     print(drug_dataset["train"][:3])
+
+    train_df = drug_dataset["train"][:]
+    frequencies = (
+        train_df["condition"]
+            .value_counts()
+            .to_frame()
+            .reset_index()
+            .rename(columns={"index": "condition", "condition": "frequency"})
+    )
+    print(frequencies.head())
+
+    drug_dataset_clean = drug_dataset["train"].train_test_split(traain_size=0.8, seed=42)
+    drug_dataset_clean["validation"] = drug_dataset_clean.pop("test")
+    drug_dataset_clean["test"] = drug_dataset["test"]
+    print(drug_dataset_clean)
+
+    # save data
+    '''
+    drug_dataset_clean.save_to_disk("drug-reviews")
+    from datasets import load_from_disk
+    drug_dataset_reloaded = load_from_disk("drug-reviews")
+
+    for split, dataset in drug_dataset_clean.items():
+        dataset.to_json(f"drug-reviews-{split}.jsonl")
+    '''
     
 
 if __name__ == '__main__':
