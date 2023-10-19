@@ -1,13 +1,18 @@
 import os
 import torch
 import transformers
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from transformers import DataCollatorWithPadding
 import evaluate
 from evaluate.module import EvaluationModule
-from transformers import Trainer, AutoModelForSequenceClassification
+from transformers import Trainer, AutoModelForSequenceClassification, AdamW, get_scheduler
 from transformers import TrainingArguments
 import numpy as np
+from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
+from accelerate import Accelerator
+import html
+
 
 bert_cased_path = "/home/cx/checkpoints/bert-base"
 data_path = "/home/cx/datas"
@@ -253,7 +258,111 @@ def test_dataset():
     for split, dataset in drug_dataset_clean.items():
         dataset.to_json(f"drug-reviews-{split}.jsonl")
     '''
-    
+
+
+def test_bigdataset():
+    from datasets import load_dataset
+    # This takes a few minutes to run, so go grab a tea or coffee while you wait :)
+    data_files = "https://the-eye.eu/public/AI/pile_preliminary_components/PUBMED_title_abstracts_2019_baseline.jsonl.zst"
+    pubmed_dataset = load_dataset("json", data_files=data_files, split="train", streaming=True)
+    print(pubmed_dataset)
+
+
+def test_pandas():
+    import pandas as pd
+    df = pd.DataFrame({
+        '姓名': ["小强", "小李", "小王", "张飞"],
+        "年龄": [24, 46, 22, 42],
+        "籍贯": ["北京", "上海", "广州", "四川"],
+        "得分": [[11,12],[21,1,2],[1,1,2,21], [2,3,2]]
+    })
+    print(df)
+    df =  df.explode("得分", ignore_index=True)
+    print(df)
+
+
+def test_faiss():
+    issues_dataset = load_dataset("/home/cx/datas/issues", split="train")
+    print(issues_dataset)
+    issues_dataset = issues_dataset.filter(lambda x: (x["is_pull_request"] == False and len(x["comments"]) > 0))
+    print(issues_dataset)
+    columns = issues_dataset.column_names
+    print(columns)
+    columns_to_keep = ["title", "body", "html_url", "comments"]
+    columns_to_remove = set(columns_to_keep).symmetric_difference(columns)
+    issues_dataset = issues_dataset.remove_columns(columns_to_remove)
+    print(issues_dataset[:3])
+    issues_dataset.set_format("pandas")
+    df = issues_dataset[:]
+    print('before explode ...')
+    print(df.iloc[0, 3])
+    comments_df = df.explode("comments", ignore_index=True)
+    print('after explode ...')
+    print(comments_df.iloc[0, 3])
+
+    comments_dataset = Dataset.from_pandas(comments_df)
+    comments_dataset = comments_dataset.map(
+        lambda x: {"comment_length": len(x["comments"].split())}
+    )
+    comments_dataset = comments_dataset.filter(lambda x: x["comment_length"] > 15)
+
+    def concatenate_text(examples):
+        return {
+            "text": examples["title"]
+                    + " \n "
+                    + examples["body"]
+                    + " \n "
+                    + examples["comments"]
+        }
+
+    comments_dataset = comments_dataset.map(concatenate_text)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(bert_cased_path)
+    model = transformers.AutoModel.from_pretrained(bert_cased_path)
+    print('**********************')
+    print(model)
+    print('**********************')
+    model.cuda()
+    device = torch.device('cuda')
+
+    def cls_pooling(model_output):
+        return model_output.last_hidden_state[:, 0]
+
+    def get_embeddings(text_list):
+        encoded_input = tokenizer(
+            text_list, padding=True, truncation=True, return_tensors="pt"
+        )
+        encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
+        model_output = model(**encoded_input)
+        return cls_pooling(model_output)
+
+    text_list = comments_dataset["text"][0]
+    print('Text Num: ', len(text_list), type(text_list[0]))
+    embedding = get_embeddings(text_list)
+    print(embedding.shape)
+
+    embeddings_dataset = comments_dataset.map(
+        lambda x: {"embeddings": get_embeddings(x["text"]).detach().cpu().numpy()[0]}
+    )
+    embeddings_dataset.add_faiss_index(column="embeddings")
+    question = "How can I load a dataset offline?"
+    question_embedding = get_embeddings([question]).cpu().detach().numpy()
+    print(question_embedding.shape)
+
+    scores, samples = embeddings_dataset.get_nearest_examples(
+        "embeddings", question_embedding, k=5
+    )
+
+    samples_df = pd.DataFrame.from_dict(samples)
+    samples_df["scores"] = scores
+    samples_df.sort_values("scores", ascending=False, inplace=True)
+    for _, row in samples_df.iterrows():
+        print(f"COMMENT: {row.comments}")
+        print(f"SCORE: {row.scores}")
+        print(f"TITLE: {row.title}")
+        print(f"URL: {row.html_url}")
+        print("=" * 50)
+        print()
+        
 
 if __name__ == '__main__':
     # tokenizer_test()
