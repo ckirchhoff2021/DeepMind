@@ -329,7 +329,7 @@ def test_faiss():
 
     def get_embeddings(text_list):
         encoded_input = tokenizer(
-            text_list, padding=True, truncation=True, return_tensors="pt"
+            text_list, padding=True, max_length=512, truncation=True, return_tensors="pt"
         )
         encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
         model_output = model(**encoded_input)
@@ -362,6 +362,18 @@ def test_faiss():
         print(f"URL: {row.html_url}")
         print("=" * 50)
         print()
+
+def bert_embedding():
+    model = transformers.AutoModel.from_pretrained(bert_cased_path)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(bert_cased_path)
+    text = ["you x x x x x"] + ["and I"] * 2048
+    text = ''.join(text)
+    print(len(text), type(text[0]))
+    print(text[0])
+    ids = tokenizer(text, truncation=True, max_length=512, return_tensors="pt")
+    # print(ids)
+    outputs = model(**ids)
+    print(outputs)
         
 
 if __name__ == '__main__':
