@@ -289,7 +289,8 @@ def slow_tokenize_function(examples):
 tokenized_dataset = drug_dataset.map(slow_tokenize_function, batched=True, num_proc=8)
 ```
 
-<img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20231114173210550.png" alt="image-20231114173210550" style="zoom:80%;" div align=left />
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/ebc1e460-93d0-4f6e-9729-d281aa975997)
+
 
 #### truncate之后返回所有的chunks
 
