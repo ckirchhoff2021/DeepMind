@@ -155,7 +155,7 @@ def main():
     )
     trainer.train()
     '''
-    custom_training(tokenized_datasets, label_names, id2label, label2id, data_collator)
+    custom_training(tokenized_datasets, label_names, id2label, label2id, tokenizer, data_collator, metric)
 
 
 def test_metric():
@@ -185,7 +185,7 @@ def postprocess(predictions, labels, label_names):
     return true_labels, true_predictions
 
 
-def custom_training(tokenized_datasets, label_names, id2label, label2id, data_collator):
+def custom_training(tokenized_datasets, label_names, id2label, label2id, tokenizer, data_collator, metric):
 
     train_dataloader = DataLoader(
         tokenized_datasets["train"],
