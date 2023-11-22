@@ -2,7 +2,7 @@
 
 ### 前沿进展
 
-+ ByteTransformer: A High Performance Transformer Boosted for Variable-Length，字节，英伟达，加州大学联合发表，IPDPS2023，国际并行和分布式处理大会，最佳论文，优化可变长输入，最高实现**131%**的加速
++ ByteTransformer: A High Performance Transformer Boosted for Variable-Length，字节，英伟达，加州大学联合发表，IPDPS2023，国际并行和分布式处理大会，最佳论文，优化可变长输入，最高实现131%的加速
 
 + FasterTransformer,推理加速
 
@@ -165,7 +165,7 @@
   ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/18e13b63-4a9d-4bd0-ac0a-34cbed4976cf)
 
 
-+ + 将最后一个输入的隐状态$C=h_4$，作为decoder每一步的输入
+  + 将最后一个输入的隐状态$C=h_4$，作为decoder每一步的输入
 
 #### seq2seq
 
@@ -192,7 +192,6 @@
 + 存在3个shape为$(N,d)$的矩阵$Q,K,v \in R^{N \times d}$
 + $S=Q \cdot K^T \in R^{N \times N}$
 + $P= softmax(S, dim=-1) \in R^{N \times N}$
-
 + $O=PV \in R^{N \times d}$
 
 + $(N,d)\times (N,d)$的时间复杂度为$O(dN^2)$
@@ -279,7 +278,7 @@
 
   + 每个token只连接到它左边相邻的L个token
 
-    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/38ddc07c-3457-4050-8737-28c3ded0a7a8)
+    + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/38ddc07c-3457-4050-8737-28c3ded0a7a8)
 
 
 + 方案二**SA2**
@@ -295,12 +294,12 @@
 
 ##### Fixed Attention
 
-+ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/cc91710f-0728-428b-8027-7314fe63ab8e)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/cc91710f-0728-428b-8027-7314fe63ab8e)
 
 + FA2
   + 从左往右，每隔固定位置选中一个token
 + FA1
-  + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/e6c9ea73-72fd-4ecb-8fbe-052446171506)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/e6c9ea73-72fd-4ecb-8fbe-052446171506)
 
 
 + 从左到右每隔L个位置选中一个token，从当前token往左遍历，直到遇到选定的token进行截断
@@ -312,7 +311,7 @@
 + 假设序列长度为$N=12$， 每个token的维度为$D$，$Q,K,V$的矩阵大小为$N\times D$
 + 将原始序列分为$3$等份(不能整除时对原始序列进行padding操作)，原始序列拆分为$3$个子序列，每个序列的长度为$4\times D$
 
-![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/24f723aa-df77-4188-856a-58560b4955ec)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/24f723aa-df77-4188-856a-58560b4955ec)
 
 + $\large Q=\left[ \begin{matrix}Q_1,\\Q_2,\\Q_3,\\Q_4\end{matrix}\right], Q_i\in R^{3 \times 128}$
 
@@ -330,11 +329,11 @@
 
 + $(i,j)$的匹配策略如下：$j=(i+1) \% M$
 
-![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/6a56e9eb-5eac-4671-961a-8ce11626b25b)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/6a56e9eb-5eac-4671-961a-8ce11626b25b)
 
 ####  Local Attention
 
-![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/45e3e306-c74f-4eb0-be91-4717d9fc5b46)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/45e3e306-c74f-4eb0-be91-4717d9fc5b46)
 
 + Local Attention依然是对原始的序列进行分组，与block attention的区别在于不需要考虑组间依赖，只是组内独立计算attention score
 
