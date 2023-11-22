@@ -16,7 +16,6 @@
 #### RNN 
 
 
-
 ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/5d97687a-239b-49ca-a119-771cabdbdbee)
 
 
@@ -96,12 +95,12 @@
 
 + 每个$q^i$去对每个$k^j$做attention，得到一个score
 
-+ 
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/c57bfc44-6596-46de-99af-139f0f21ed62)
 
 + $p_{1,i}=q^1 \cdot k^i/\sqrt{d}$，其中$d$为$k$的dim
 
 + 经过softmax得到$p'_{1,i}$
-+ 
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/16bfe9e4-3b4e-4038-b310-e80738d012d7)
 
 + 经过$b_1=\sum_i{p'_{1,i}v_i}$，得到$b_1$
 + 同理得到$b_2,b_3,...,b_n$
@@ -126,7 +125,7 @@
 
 #### Multi-head self-attention
 
-![image-20230718200555885](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230718200555885.png)
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/6ab43ab7-2b01-4ed2-9d93-7ac6d156dd8a)
 
 + multi-head self-attention与self-attention的区别在于，得到$q^i,k^i,v^i$后并没有直接计算attention，而是利用$q^i,k^i,v^i$得到多组$q^{i,j},k^{i,j},v^{i,j}$，分组进行attention计算，得到${b_{i,1},b_{i_2},...,b_{i_n}}$，对于sequence中的某个输入$a^i$而言，得到多个输出$b^{i,1}, b^{i,2},...,b^{i, n}$，最后把这些输出concat起来，通过矩阵乘，再得到最终的输出$b_i$
 + 如上图所示：
@@ -140,7 +139,7 @@
 
 + 在此基础上，对self-attention添加Positional Encoding
 
-  <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230719095317196.png" alt="image-20230719095317196" style="zoom:100%;" div align=left />
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/891c18da-74e6-4e31-a5fe-4cbf145fec3d)
 
 + $e^i$直接对位置信息进行onehot编码，然后直接叠加到$a^i$上
 
@@ -148,27 +147,28 @@
 
 + a. 输入长度为**N**，输出长度为**N**
 
-  <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720160338622.png." alt="image-20230720160338622" style="zoom:100%;" div align=left />
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/35f75d07-7238-4867-be0a-7011e6287d88)
+
 
 + b. 输入长度为N，输出长度为1
 
-  
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/7f4f2792-3dec-4619-929d-a915e0b44d52)
 
-<img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720160448026.png" alt="image-20230720160448026" style="zoom:100%;" div align=left />
 
 + c. 输入长度为1，输出长度为N
 
-  <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720160544472.png" alt="image-20230720160544472" style="zoom:100%;" div align=left />
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/183ce7aa-743d-4b06-a569-1555b41dbd30)
 
-<img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720160703229.png." alt="image-20230720160703229" style="zoom:100%;" div align=left />
 
 + d. 输入长度为N，输出长度为M
 
-  ![image-20230720161345057](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720161345057.png)
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/ad2bf852-67b0-4917-9d01-d13055f088c0)
+
 
   + 将最后一个输入的隐状态$C=h_4$，作为decoder的初始状态$h'_0$
+    
+  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/18e13b63-4a9d-4bd0-ac0a-34cbed4976cf)
 
-![image-20230720161405529](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720161405529.png)
 
 + + 将最后一个输入的隐状态$C=h_4$，作为decoder每一步的输入
 
@@ -178,7 +178,8 @@
 
 #### Bert
 
-<img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230720163629341.png." alt="image-20230720163629341" style="zoom:100%;" />
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/d40384e3-e7b8-4731-9e3a-66815913b9dd)
+
 
 + decoder layer中包含两层multi-head attention，第一层attention 是 masked attention，attention score的计算会掩盖掉后置token的影响，mask会在softmax计算前发生作用
 + 第二层attention的K,V使用的是Encoder的编码信息输出进行计算，Q使用的是上一个Decoder Block的输出计算
@@ -228,8 +229,6 @@
 
   + $\large m(x^{(1)})=max([x_1^{(1)}, x_2^{(1)},...,x_B^{(1)}])$
 
-    
-
   + $\large f(x^{(1)})=[e^{x_1^{(1)}-m(x^{(1)})},...,e^{x_B^{(1)}-m(x^{(1)})}]$
 
   + $l(x^{(1)})=\sum_if(x^{(1)}){[i]}$
@@ -258,11 +257,6 @@
   + $dp=p-p^2$
   + 矩阵$p$的大小是$O(N^2)$，内存消耗大且开销也大，为了减少内存消耗，保存$logsumexp$，大小是$O(N \times 1)$
 
-### Flash Attention2
-
-![image-20230802101614269](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230802101614269.png)
-
-![image-20230802101636349](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230802101636349.png)
 
 ### Transformer改进版
 
@@ -290,13 +284,15 @@
 
   + 每个token只连接到它左边相邻的L个token
 
-    <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230803195717887.png" alt="image-20230803195717887" style="zoom:100%;" div align=left />
+    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/11a22202-6fe5-42ee-a044-3c7c74a59e57)
+
 
 + 方案二**SA2**
 
   + 每个token只连接到它左边部分token，token的选择规则如下，从自己往左数，每隔L个就选中1个
 
-    <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230803200345448.png" alt="image-20230803200345448" style="zoom:100%;" div align= left />
+    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/38ddc07c-3457-4050-8737-28c3ded0a7a8)
+
 
 + SA1和SA2的方法本质是在选择哪些token可以连接计算
 
@@ -304,12 +300,13 @@
 
 ##### Fixed Attention
 
-+ <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230803201130646.png" alt="image-20230803201130646" style="zoom:100%;" div align=left />
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/762c3211-d773-4c15-b5e3-5049c6cb76b0)
 
 + FA2
   + 从左往右，每隔固定位置选中一个token
 + FA1
-  + <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230803201421237.png" alt="image-20230803201421237" style="zoom:100%;" align=left />
+  + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/e6c9ea73-72fd-4ecb-8fbe-052446171506)
+
 
 + 从左到右每隔L个位置选中一个token，从当前token往左遍历，直到遇到选定的token进行截断
 
@@ -320,7 +317,7 @@
 + 假设序列长度为$N=12$， 每个token的维度为$D$，$Q,K,V$的矩阵大小为$N\times D$
 + 将原始序列分为$3$等份(不能整除时对原始序列进行padding操作)，原始序列拆分为$3$个子序列，每个序列的长度为$4\times D$
 
-![image-20230811162849841](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230811162849841.png)
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/24f723aa-df77-4188-856a-58560b4955ec)
 
 + $\large Q=\left[ \begin{matrix}Q_1,\\Q_2,\\Q_3,\\Q_4\end{matrix}\right], Q_i\in R^{3 \times 128}$
 
@@ -338,13 +335,11 @@
 
 + $(i,j)$的匹配策略如下：$j=(i+1) \% M$
 
-![image-20230814094718214](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230814094718214.png)
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/6a56e9eb-5eac-4671-961a-8ce11626b25b)
 
 ####  Local Attention
 
-![image-20230814095459503](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230814095459503.png)
-
-
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/45e3e306-c74f-4eb0-be91-4717d9fc5b46)
 
 + Local Attention依然是对原始的序列进行分组，与block attention的区别在于不需要考虑组间依赖，只是组内独立计算attention score
 
