@@ -23,9 +23,9 @@
 
 ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/55003941-4c54-47b1-80f4-0ebf6eabfc11)
 
-+ Input为$(x_{0}， x_{1}, ... ,x_{n})$
++ Input为 $(x_{0}， x_{1}, ... ,x_{n})$
 
-+ output为$(o_0,o_1,...，o_n)$
++ output为 $(o_0,o_1,...，o_n)$
 
 + $O_t=G(V \cdot S_t)$
 
@@ -262,7 +262,7 @@
 
 + Transformer的计算复杂度和空间复杂度都为$O(N^2)$，
 + 只考虑Decoder场景下：
-+ <img src="C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20230803194518399.png." alt="image-20230803194518399" style="zoom:100%;" div align=left />
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/11a22202-6fe5-42ee-a044-3c7c74a59e57)
 
 + 假设token的长度伟10，蓝色表示当前token,绿色表示与当前token计算attentionscore的其它token的位置
 + 那么，
@@ -284,14 +284,14 @@
 
   + 每个token只连接到它左边相邻的L个token
 
-    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/11a22202-6fe5-42ee-a044-3c7c74a59e57)
+    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/38ddc07c-3457-4050-8737-28c3ded0a7a8)
 
 
 + 方案二**SA2**
 
   + 每个token只连接到它左边部分token，token的选择规则如下，从自己往左数，每隔L个就选中1个
 
-    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/38ddc07c-3457-4050-8737-28c3ded0a7a8)
+    ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/762c3211-d773-4c15-b5e3-5049c6cb76b0)
 
 
 + SA1和SA2的方法本质是在选择哪些token可以连接计算
@@ -300,7 +300,7 @@
 
 ##### Fixed Attention
 
-+ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/762c3211-d773-4c15-b5e3-5049c6cb76b0)
++ ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/cc91710f-0728-428b-8027-7314fe63ab8e)
 
 + FA2
   + 从左往右，每隔固定位置选中一个token
