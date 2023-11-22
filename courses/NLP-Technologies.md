@@ -40,7 +40,7 @@
 + $c^t = z^f \cdot c^{t-1} + z^i \cdot z$
 + $h^t=z^o \cdot tanh(c^t)$
 + $y^t=\sigma(w^{'} \cdot h^t)$
-+ $z=tanh(w \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
++ $$z=tanh(w \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$$
 + $z^i=\sigma(w^i \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 + $z^f=\sigma(w^f \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 + $z^o=\sigma(w^o \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
