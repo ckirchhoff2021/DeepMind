@@ -33,7 +33,7 @@
 
 #### LSTM(long short term memory)
 
-+ LSTM在RNN的基础上引入了额外的参数矩阵，$w^f,w^i,w^o$，分别对应**遗忘门(forget gate)，输入门(input gate)，输出门(output gate)**，本质上是通过门控状态来控制传输状态，而非简单的记忆叠加，记住需要长期记忆的，忘记不重要的信息
++ LSTM在RNN的基础上引入了额外的参数矩阵，$w^f,w^i,w^o$ ，分别对应**遗忘门(forget gate)，输入门(input gate)，输出门(output gate)**，本质上是通过门控状态来控制传输状态，而非简单的记忆叠加，记住需要长期记忆的，忘记不重要的信息
 + 解决长序列训练过程中的梯度消失和梯度爆炸问题
 + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/02dbeaaf-a9ce-4e38-aa43-3f2a34f40c41)
 
@@ -67,8 +67,8 @@
 
 + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/2c0f969f-289e-4de4-88a1-a3e27885b7d3)
 
-+ 双向RNN在RNN的基础上增加了一条反向传导链，分别计算图中$A_1, A'_1$
-+ 然后把$A_1,A'_1$分别经过激活得到的结果进行cancat得到$y$
++ 双向RNN在RNN的基础上增加了一条反向传导链，分别计算图中 $A_1, A'_1$
++ 然后把 $A_1,A'_1$ 分别经过激活得到的结果进行cancat得到 $y$
 + $y_t=\left[ \begin{matrix} G(V\cdot A_t) \\ G(V' \cdot A'_t)\end{matrix} \right]$
 
 + $A_t = F(U \cdot x_t + W \cdot A_{t-1})$
@@ -83,12 +83,12 @@
 + 处理逻辑如下
 + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/992ed529-308f-4838-ae15-e0ef31a6566a)
 
-+ $x^i, a^i$均为列向量，如shape为(128, 1)
-+ 对于sequence中的向量$x^i$，先做一次embedding得到$a^i$，按上图计算得到$q^i,k^i,v^i$
++ $x^i, a^i$ 均为列向量，如shape为(128, 1)
++ 对于sequence中的向量 $x^i$，先做一次embedding得到 $a^i$，按上图计算得到 $q^i,k^i,v^i$
 + $a^i=W \cdot x^i$
 + $q^i=W^q\cdot a^i,k^i=W^k \cdot a^i, v^i=w^v \cdot a^i$
 
-+ 每个$q^i$去对每个$k^j$做attention，得到一个score
++ 每个 $q^i$去对每个$k^j$做attention，得到一个score
 
 + ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/c57bfc44-6596-46de-99af-139f0f21ed62)
 
