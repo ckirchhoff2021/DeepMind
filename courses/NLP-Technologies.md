@@ -44,11 +44,11 @@
 
 + $z=tanh(w \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 
-+ $z^i=\sigma(w^i \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
++  $z^i=\sigma(w^i \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 
-+ $z^f=\sigma(w^f \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
++  $z^f=\sigma(w^f \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 
-+ $z^o=\sigma(w^o \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
++  $z^o=\sigma(w^o \cdot \left[ \begin{matrix} x^t \\h^{t-1}\end{matrix} \right])$
 
 #### GRU(Gate Recurrent Unit)
 
