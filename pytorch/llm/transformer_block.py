@@ -66,7 +66,7 @@ class MultiHeadAttention(nn.Module):
         self.wv = nn.Linear(self.hidden_dim, self.hidden_dim * self.heads)
 
         self.scale = self.hidden_dim ** 0.5
-        self.out = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.out = nn.Linear(self.hidden_dim * self.heads, self.hidden_dim)
 
     @staticmethod
     def attention(q, k, v, hidden_dim, heads, mask=None, dropout=None):
@@ -91,6 +91,7 @@ class MultiHeadAttention(nn.Module):
         v = self.wv(v).view(bs, -1, self.hidden_dim)
 
         scores = self.attention(q, k, v, self.hidden_dim, self.heads, mask, self.dropout)
+        scores = scores.view(bs, -1, self.hidden_dim * self.heads)
         output = self.out(scores)
         return output
 
@@ -139,7 +140,8 @@ class EncoderLayer(nn.Module):
         y2 = self.norm_2(y)
         y = y + self.dropout_2(self.ffn(y2))
         return y
-    
+
+
 class Encoder(nn.Module):
     def __init__(self, vocab_size, hidden_dim, N, heads, dropout):
         super(Encoder, self).__init__()
@@ -181,6 +183,7 @@ class DecoderLayer(nn.Module):
         y1 = y1 + self.dropout_3(self.ffn(x3))
         return y1
 
+
 class Decoder(nn.Module):
     def __init__(self, vocab_size, hidden_dim, N, heads, dropout):
         super(Decoder, self).__init__()
@@ -196,6 +199,7 @@ class Decoder(nn.Module):
         for i in range(self.num):
             x = self.layers[i](x, encoder_outputs, source_mask, target_mask)
         return self.norm(x)
+
 
 class Transformer(nn.Module):
     def __init__(self, source_vocab, target_vocab, hidden_dim, layer_num, heads, dropout):
