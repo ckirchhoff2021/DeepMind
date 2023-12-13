@@ -59,6 +59,14 @@
 
  ![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/228a79f0-9574-43e8-a095-cc0e3966bfac)
 
++ scatter reduce计算过程如下：
 
+![image](https://github.com/ckirchhoff2021/DeepMind/assets/2441530/f599fd80-a72a-40c4-89e9-14434d772f8e)
+
++ allgather过程，主要是让所有worker的所有网络参数的梯度都是上一步中某个worker上的完整梯度，这里需要再进行**4次信息**传递，把每个worker上各自梯度完整的部分传播到其它worker上
++ 经过scatter reduce操作和all gather操作，所有worker上的参数都是融合了所有worker计算的梯度的结果了
+
++ 注意，每次信息传递都是相邻节点同时进行信息传递，是并发的，无需同步等待
++ 经过上次的通信过程可以发现，一次Ring AllReduce过程需要进行 2*(worker_num-1)次信息交互，其中每个worker进行通信的次数是相同的， 因此Ring AllReduce架构通信时间并不会随着worker数量的增加而增加，但是运行效率却会线性增加。
 
 
