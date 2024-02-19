@@ -6,7 +6,7 @@ import os
 
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import ddpm.script_utils as script_utils
+import models.utils as script_utils
 import cv2
 from torchvision.utils import save_image
 import torch.nn.functional as F
