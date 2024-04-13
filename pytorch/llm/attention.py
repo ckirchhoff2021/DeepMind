@@ -113,6 +113,30 @@ class GroupQueryAttention(nn.Module):
         return self.out(x)
 
 
+class PositionEmbedding(nn.Module):
+    def __init__(self, d_model, seq_len):
+        # p(i, 2t) = sin(i/ (10000 ^ (2t/d))), p(i, 2t) = cos(i/ (10000 ^ (2t/d)))
+        super(PositionEmbedding, self).__init__()
+        self.d_model = d_model
+        self.seq_len = seq_len
+        self.pe = torch.zeros(seq_len, d_model)
+
+        pos_vec = np.array([self.get_pos_vec(i) for i in range(seq_len)])
+        pos_vec = torch.from_numpy(pos_vec)
+
+        self.pe[:, 0::2] = torch.sin(pos_vec[:, 0::2])
+        self.pe[:, 1::2] = torch.cos(pos_vec[:, 1::2])
+
+        self.pe = self.pe.unsqueeze(0)
+        self.register_buffer('pe', self.pe)
+
+    def get_pos_vec(self, pos):
+        return [pos / np.power(10000, 2*(t//2) / self.d_model) for t in range(self.d_model)]
+
+    def forward(self, x):
+        return self.pe[:, :x.size(1)]
+        
+
 if __name__ == '__main__':
     model = GroupQueryAttention(4, 12,768)
     q = torch.randn(2, 128, 768)
