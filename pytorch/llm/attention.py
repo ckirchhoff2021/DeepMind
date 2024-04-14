@@ -137,6 +137,26 @@ class PositionEmbedding(nn.Module):
         return self.pe[:, :x.size(1)]
         
 
+class RotaryPositionEmbedding(nn.Module):
+    def __init__(self, d_model, seq_len, base=10000.0):
+        super(RotaryPositionEmbedding, self).__init__()
+        freqs = 1.0 / (torch.tensor(base) ** (torch.arange(0, d_model, 2) / d_model))
+        seqs = torch.arange(0, seq_len)
+        freqs = torch.outer(seqs, freqs)
+        freqs_complex = torch.polar(torch.ones_like(freqs), freqs)
+        self.freqs_complex = freqs_complex
+        self.register_buffer('freqs', freqs_complex)
+
+    def forward(self, x):
+        # B, S, D
+        x1 = x.reshape(*x.shape[:-1], -1, 2)
+        x2 = torch.view_as_complex(x1)
+        y = self.freqs_complex * x2
+        y = torch.view_as_real(y).flatten(2)
+        return y
+
+
+
 if __name__ == '__main__':
     model = GroupQueryAttention(4, 12,768)
     q = torch.randn(2, 128, 768)
