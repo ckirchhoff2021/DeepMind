@@ -134,4 +134,11 @@
 
 ![image-20240417173624537](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240417173624537.png)
 
-+ ​	
++ **核心训练任务**
+
+  + **ITC**，image-text contrastive借鉴CLIP的思想
+    + 使用image的[CLS]token和文本[CLS]token的embedding作为图像和文本的聚合表征
+  + **ITM**， image-text matching，二分类任务，判断image-text是否匹配
+    + 随机以0.5的概率将文本对应的图片替换成不同的图片，使用文本标志位的输出外接一个二分类FC，判断图像文本是否匹配
+    + 借鉴AlBEF的思想，进行hard-negative-sampling，在负样本中选择余弦相似度最高的文本作为负样本
+  + **MLM**, masked-language modeling，bert的完形填空任务
