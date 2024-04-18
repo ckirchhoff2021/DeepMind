@@ -143,7 +143,7 @@
     + 借鉴AlBEF的思想，进行hard-negative-sampling，在负样本中选择余弦相似度最高的文本作为负样本
   + **MLM**, masked-language modeling，bert的完形填空任务
 
-#### BLIP 
+#### 6.BLIP 
 
 + **BLIP: Bootstrapping Language-Image Pre-training for Unified Vision-Language Understanding and Generation**
 
