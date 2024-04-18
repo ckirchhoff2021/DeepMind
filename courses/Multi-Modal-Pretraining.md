@@ -142,3 +142,127 @@
     + 随机以0.5的概率将文本对应的图片替换成不同的图片，使用文本标志位的输出外接一个二分类FC，判断图像文本是否匹配
     + 借鉴AlBEF的思想，进行hard-negative-sampling，在负样本中选择余弦相似度最高的文本作为负样本
   + **MLM**, masked-language modeling，bert的完形填空任务
+
+#### BLIP 
+
++ **BLIP: Bootstrapping Language-Image Pre-training for Unified Vision-Language Understanding and Generation**
+
++ [GitHub - salesforce/BLIP: PyTorch code for BLIP: Bootstrapping Language-Image Pre-training for Unified Vision-Language Understanding and Generation](https://github.com/salesforce/BLIP)
+
+  ![image-20240417175815349](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240417175815349.png)
+
++ **模型结构如上图所示：**
+  + A unified VLP framework to learn from noisy image-text pairs
+  + 依然是双塔结构
+  + vision部分使用patch embedding然后经过transformer encoder得到vision embedding
+  + text部分使用transformer encoder得到word embedding
+
++ **核心训练任务**
+  + **ITC**，image-text contrastive借鉴CLIP的思想
+    + 使用image的[CLS]token和文本[CLS]token的embedding作为图像和文本的聚合表征
+  + **ITM**， image-text matching，二分类任务，判断image-text是否匹配
+    + 随机以0.5的概率将文本对应的图片替换成不同的图片，使用文本标志位的输出外接一个二分类FC，判断图像文本是否匹配
+    + 借鉴AlBEF的思想，进行hard-negative-sampling，在负样本中选择余弦相似度最高的文本作为负样本
+  + **MLM**, masked-language modeling，bert的完形填空任务
+
+#### 7. BeitV3
+
++ **Image as a Foreign Language: BEIT Pretraining for All Vision and Vision-Language Tasks**
++ [unilm/beit3 at master · microsoft/unilm · GitHub](https://github.com/microsoft/unilm/tree/master/beit3)
+
+![image-20240418095421403](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418095421403.png)
+
++ **模型结构如上图所示：**
+
+  + 模型结构基本与VLMO相同
+
+  ![image-20240418095859397](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418095859397.png)
+
+  + Multiway Transformer共享self-attention的参数，在FFN中区分当前具体是哪个模态，走对应的FFN分支
+  + 除了本身可以作为fusion-encoder之外，还可以通过vision-ffn或者language-ffn转变为单模态encoder和dual-encoder
+  + VLMO是24层encoder-layer， hidden_size=1024, 16个attention head
+  + BEIT-3是40层encoder-layer, hidden_size=1408, 16个attention head
+
++ **核心训练任务**
+
+  + **masked data modeling**
+    + 随机masked一定比例的token和image patch，训练模型去恢复被mask的token
+    + 这个统一的mask-thne-predict任务不仅学习表征，同时学习不同模态之间的对齐
+    + 文本直接分词得到embedding，图像使用BEITv2得到vision Token
+
+#### 8. Beit
+
++ **BEIT: BERT Pre-Training of Image Transformers**
+
++ [unilm/beit at master · microsoft/unilm · GitHub](https://github.com/microsoft/unilm/tree/master/beit)
+
+  ![image-20240418145806637](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418145806637.png)
+
++ **模型结构如上图所示：**
+  + 在预训练之前，先通过一个autoencoding-style reconstruction 学习图像分词器image tokenizer，把图像分割成离散的visual token
+  + 每一张图像有2种呈现，image patches和visual tokens，随机mask一定比例的image patches，并用[MASK] embedding进行替换
+  + 然后patches被喂给vision Transformer，训练任务主要是预测patch后的图像的visual token，而不是直接预测masked区域的像素
+
++ **核心训练任务**
+  + **MIM, masked image modeling**
+
+#### 9. Beitv2
+
++ **BEIT V2: Masked Image Modeling with Vector-Quantized Visual Tokenizers**
+
++ [GitHub - microsoft/unilm: Large-scale Self-supervised Pre-training Across Tasks, Languages, and Modalities](https://github.com/microsoft/unilm)
+
+  ![image-20240418155226253](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418155226253.png)
+
+![image-20240418162557689](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418162557689.png)
+
++ **模型结构如上图所示：**
+  + 与V1基本一致，只是在visual token的提取上有一些区别
+
++ **核心训练任务**
+  + **MIM, masked image modeling**
+
+#### 10. MAE
+
++ **Masked Autoencoders Are Scalable Vision Learners**
++ https://github.com/facebookresearch/mae/tree/main
+
+![image-20240418163823254](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418163823254.png)
+
++ **模型结构如上图所示：**
+  + encoder-decoder结构，encoder将原始图像patch映射到latent space，decoder根据latent space还原图像，训练完毕encoder作为特征提取器提取视觉特征用于下游任务
++ **核心训练任务**
+  + **MIM， masked image modeling**
+
+#### 11. SD
+
++ **High-Resolution Image Synthesis with Latent Diffusion Models**
++ [GitHub - CompVis/latent-diffusion: High-Resolution Image Synthesis with Latent Diffusion Models](https://github.com/CompVis/latent-diffusion)
+
+![image-20240418164633130](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418164633130.png)
+
++ **模型结构如上图所示：**
+
+  + 先使用用autoencoding模型去对原始输入图像进行压缩，将视觉特征投影到llatent space，从而减少diffusion model生成过程的计算量
+  + 图像压缩到latent space的feature可以用于很多生成任务
+  + autoencoder实际上就是对原始图像进行Perceptual Image Compression，encoder部分对原始图像进行下采样，一般是2的幂次
+  + 利用condition的embedding和视觉特征做cross-attention来控制生成过程，cross-attention机制可适用多模态场景
+  + cross-attention的基本原理是利用一个模态生成Q，另一个模态生成K, V，然后计算self-attention
+  + $Q=W_{Q}^{(i)}\cdot{\phi_i}(z_t), K=W_{K}^{(i)}\cdot{\tau_{\theta}}(y), V=W_{V}^{(i)}\cdot{\tau_\theta}(y)$
+
+  + 生成图像时，先通过unet去噪，得到latent space的表征，然后再通过autoencoder的decoder模块还原到像素空间
+
+
+#### 12. DIT
+
++ **Scalable Diffusion Models with Transformers**
++ https://github.com/facebookresearch/DiT
+
+![image-20240418172544852](C:\Users\c00657215\AppData\Roaming\Typora\typora-user-images\image-20240418172544852.png)
+
++ **模型结构如上图所示：**
+  + latent空间的特征输入到DIT BLOCK，整体训练DIT BLOCK
+  + DIT Block设计如下：
+  + **In-context conditioning**，将timestep和condition的embedding作为额外的token，追加到输入sequence中，按image token对待
+  + **Cross-attention Block**，
+  
