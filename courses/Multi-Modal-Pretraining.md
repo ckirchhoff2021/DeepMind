@@ -264,5 +264,7 @@
   + latent空间的特征输入到DIT BLOCK，整体训练DIT BLOCK
   + DIT Block设计如下：
   + **In-context conditioning**，将timestep和condition的embedding作为额外的token，追加到输入sequence中，按image token对待
-  + **Cross-attention Block**，
+  + **Cross-attention Block**，将timestep和condition的embedding拼接成一个长度为2的sequence，与图像序列区分开，然后在原结构的multihued-attention layer后面接multihead-cross attention layer
+  - **Adaptive layer norm block(adaLN)**，替换transformer encoder中的layernorm为adaLN，与直接学习layernorm的$\gamma$和$\beta$不同，通过timestep的embedding和condition的embedding相加得到新的embedding，然后通过MLP回归得到缩放系数$\gamma$和偏移量$\beta$
+  - **adaLN-Zero block**, 将adaLN的linear层参数初始化为zero；并对每个DiT block的最后一个层规范层进行zero初始化，以加速大模型训练
   
